@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ quiz.title }}</title>
+    <style>
+        a{
+            font-size: 20px;
+            color: white;
+            text-decoration: none;
+        }
+        button{
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #EFDD30;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover{
+            background-color: #FFD700;
+        }
+        h1{
+            text-align: center;
+            color: #EFDD30;
+        }
+        body{
+            background-color: #1900A8;
+        }
+        div{
+            color: #4D62F5;
+            margin: 40px;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>{{ quiz.title }}</h1>
+
+    {% for question in questions %}
+        <div>
+            <strong>{{ question.text }}</strong>
+
+            {% for answer in question.answer_set.all %}
+                <div>
+                    - {{ answer.text }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+    <!-- HOST QUIZ BUTTON -->
+    <form action="{% url 'host' quiz.id %}" method="get">
+    <button type="submit">HOST QUIZ</button>
+</form>
+
+</body>
+</html>

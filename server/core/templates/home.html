@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HOME</title>
+    <style>
+        a{
+        font-size: 20px;
+        color: white;
+
+        }
+        h1{
+        text-align: center;
+        color: #EFDD30;
+        }
+        body{
+        background-color: #1900A8;
+        }
+        div{
+        color: #4D62F5;
+        margin: 40px;
+        position: relative;
+        }
+        footer{
+        position: relative;
+        top: 550px;
+
+        }
+    </style>
+</head>
+<body>
+    <h1>WHO WANTS TO BE POOR</h1>
+    <div><a href="{% url 'create' %}">CREATE</a></div>
+    <div><a href="{% url 'quiz' %}">QUIZES</a></div>
+    <div><a href="{% url 'my' %}">MY QUIZES</a></div>
+    <div><a href="{% url 'join' %}">JOIN</a></div>
+
+</body>
+
+<footer>
+    <a href="{% url 'about_page' %}">about</a>
+    <a href="{% url 'contact_page' %}">contact</a>
+</footer>
+</html>

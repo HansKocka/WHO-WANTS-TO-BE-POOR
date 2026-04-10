@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Host Quiz</title>
+        <style>
+        a {
+            font-size: 20px;
+            color: white;
+        }
+        h1 {
+            text-align: center;
+            color: #EFDD30;
+        }
+        body {
+            background-color: #1900A8;
+            font-family: Arial, sans-serif;
+        }
+        div {
+            color: #4D62F5;
+            margin: 40px;
+            position: relative;
+        }
+        footer {
+            position: relative;
+            top: 550px;
+        }
+        /* Styl pro formulář */
+        #join-form {
+            max-width: 400px;
+            margin: 80px auto;
+            background-color: #2a2aff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        #join-form input {
+            font-size: 18px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        #join-form button {
+            font-size: 20px;
+            background-color: #EFDD30;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #1900A8;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        #join-form button:hover {
+            background-color: #d4c92a;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hosting: {{ quiz.title }}</h1>
+<h2>Your game PIN: {{ session.pin }}</h2>
+
+<h3>Players connected:</h3>
+<ul id="players-list"></ul>
+
+<button id="start-btn">Start Game</button>
+
+<script>
+    const sessionPin = "{{ session.pin }}";
+    const ws = new WebSocket(`ws://${window.location.host}/ws/quiz/${sessionPin}/`);
+
+    const playersList = document.getElementById('players-list');
+    const startBtn = document.getElementById('start-btn');
+
+    ws.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+
+        if (data.action === "player_join") {
+            const li = document.createElement('li');
+            li.textContent = data.name;
+            playersList.appendChild(li);
+        }
+
+        if (data.action === "start") {
+            // Přesměrování na stránku s otázkami (připravíme potom)
+            window.location.href = "/game/" + sessionPin + "/";
+        }
+    };
+
+    startBtn.onclick = function() {
+        ws.send(JSON.stringify({
+            "action": "start"
+        }));
+    };
+</script>
+</body>
+</html>

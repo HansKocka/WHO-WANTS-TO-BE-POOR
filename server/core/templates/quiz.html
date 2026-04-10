@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QUIZES</title>
+    <style>
+        a{
+        font-size: 20px;
+        color: white;
+        }
+        h1{
+        text-align: center;
+        color: #EFDD30;
+        }
+        body{
+        background-color: #1900A8;
+        }
+        div{
+        color: #4D62F5;
+        margin: 40px;
+        position: relative;
+        }
+        footer{
+        position: relative;
+        top: 550px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ALL QUIZES</h1>
+
+    {% for quiz in quizzes %}
+        <div>
+            <a href="{% url 'quiz_detail' quiz.id %}">
+                {{ quiz.title }}
+            </a>
+        </div>
+    {% empty %}
+        <div>No quizzes available</div>
+    {% endfor %}
+
+</body>
+
+<footer>
+    <a href="{% url 'about_page' %}">about</a>
+    <a href="{% url 'contact_page' %}">contact</a>
+</footer>
+
+</html>

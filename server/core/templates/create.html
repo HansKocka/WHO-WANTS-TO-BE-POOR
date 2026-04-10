@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Quiz</title>
+
+    <script>
+        let questionCount = 1;
+
+        function addQuestion() {
+            questionCount++;
+
+            const container = document.getElementById("questions");
+
+            const div = document.createElement("div");
+            div.innerHTML = `
+                <hr>
+                <h3>Question ${questionCount}</h3>
+
+                <input type="text" name="question_${questionCount}" placeholder="Question"><br><br>
+
+                <input type="text" name="answer1_${questionCount}" placeholder="Answer 1"><br>
+                <input type="text" name="answer2_${questionCount}" placeholder="Answer 2"><br>
+                <input type="text" name="answer3_${questionCount}" placeholder="Answer 3"><br>
+                <input type="text" name="answer4_${questionCount}" placeholder="Answer 4"><br><br>
+
+                <label>Correct answer:</label>
+                <select name="correct_${questionCount}">
+                    <option value="1">Answer 1</option>
+                    <option value="2">Answer 2</option>
+                    <option value="3">Answer 3</option>
+                    <option value="4">Answer 4</option>
+                </select>
+                <br><br>
+            `;
+
+            container.appendChild(div);
+        }
+    </script>
+</head>
+<body>
+
+<h1>Create Quiz</h1>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <input type="text" name="title" placeholder="Quiz title"><br><br>
+
+    <div id="questions">
+        <h3>Question 1</h3>
+
+        <input type="text" name="question_1" placeholder="Question"><br><br>
+
+        <input type="text" name="answer1_1" placeholder="Answer 1"><br>
+        <input type="text" name="answer2_1" placeholder="Answer 2"><br>
+        <input type="text" name="answer3_1" placeholder="Answer 3"><br>
+        <input type="text" name="answer4_1" placeholder="Answer 4"><br><br>
+
+        <label>Correct answer:</label>
+        <select name="correct_1">
+            <option value="1">Answer 1</option>
+            <option value="2">Answer 2</option>
+            <option value="3">Answer 3</option>
+            <option value="4">Answer 4</option>
+        </select>
+
+        <br><br>
+    </div>
+
+    <button type="button" onclick="addQuestion()">➕ Add another question</button>
+
+    <br><br>
+    <button type="submit">SAVE QUIZ</button>
+</form>
+
+</body>
+</html>

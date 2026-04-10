@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Join Game</title>
+    <style>
+        a {
+            font-size: 20px;
+            color: white;
+        }
+        h1 {
+            text-align: center;
+            color: #EFDD30;
+        }
+        body {
+            background-color: #1900A8;
+            font-family: Arial, sans-serif;
+        }
+        div {
+            color: #4D62F5;
+            margin: 40px;
+            position: relative;
+        }
+        footer {
+            position: relative;
+            top: 550px;
+        }
+        /* Styl pro formulář */
+        #join-form {
+            max-width: 400px;
+            margin: 80px auto;
+            background-color: #2a2aff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        #join-form input {
+            font-size: 18px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        #join-form button {
+            font-size: 20px;
+            background-color: #EFDD30;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #1900A8;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        #join-form button:hover {
+            background-color: #d4c92a;
+        }
+    </style>
+</head>
+<body>
+    <h1>WHO WANTS TO BE POOR</h1>
+
+    <form id="join-form">
+        <input type="text" id="name" placeholder="Your Name" required />
+        <input type="text" id="pin" placeholder="Game PIN" required />
+        <button type="submit">Join Game</button>
+    </form>
+
+    <footer>
+        <a href="{% url 'about_page' %}">about</a>
+        <a href="{% url 'contact_page' %}">contact</a>
+    </footer>
+
+    <script>
+        const form = document.getElementById('join-form');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const pin = document.getElementById('pin').value;
+
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const ws = new WebSocket(`${protocol}://${window.location.host}/ws/quiz/${pin}/`);
+
+            ws.onopen = function() {
+                ws.send(JSON.stringify({
+                    "action": "join",
+                    "name": name
+                }));
+            };
+
+            ws.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                if (data.action === "start") {
+                    // Přesměrování na stránku hry, až host spustí hru
+                    window.location.href = "/game/" + pin + "/";
+                }
+            };
+
+            ws.onclose = function() {
+                alert("Connection closed.");
+            };
+        });
+    </script>
+</body>
+</html>
