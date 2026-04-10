@@ -88,14 +88,14 @@
 
             ws.onopen = function() {
                 ws.send(JSON.stringify({
-                    "action": "join",
+                    "type": "join",
                     "name": name
                 }));
             };
 
             ws.onmessage = function(e) {
                 const data = JSON.parse(e.data);
-                if (data.action === "start") {
+                if (data.type === "start") {
                     // Přesměrování na stránku hry, až host spustí hru
                     window.location.href = "/game/" + pin + "/";
                 }
@@ -104,6 +104,9 @@
             ws.onclose = function() {
                 alert("Connection closed.");
             };
+
+    document.body.innerHTML = "<h1>Waiting for host...</h1>";
+};
         });
     </script>
 </body>

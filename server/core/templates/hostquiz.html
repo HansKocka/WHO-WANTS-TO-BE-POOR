@@ -70,7 +70,7 @@
 
 <script>
     const sessionPin = "{{ session.pin }}";
-    const ws = new WebSocket(`ws://${window.location.host}/ws/quiz/${sessionPin}/`);
+    const ws = new WebSocket(`wss://${window.location.host}/ws/quiz/${sessionPin}/`);
 
     const playersList = document.getElementById('players-list');
     const startBtn = document.getElementById('start-btn');
@@ -78,17 +78,19 @@
     ws.onmessage = function(e) {
         const data = JSON.parse(e.data);
 
-        if (data.action === "player_join") {
-            const li = document.createElement('li');
-            li.textContent = data.name;
-            playersList.appendChild(li);
+        if (data.type === "players_update") {
+            playersList.innerHTML = "";
+
+            data.players.forEach(name => {
+                const li = document.createElement("li");
+                li.textContent = name;
+                playersList.appendChild(li);
+            });
         }
 
-        if (data.action === "start") {
-            // Přesměrování na stránku s otázkami (připravíme potom)
-            window.location.href = "/game/" + sessionPin + "/";
-        }
-    };
+    if (data.type === "start") {
+        window.location.href = "/game/" + sessionPin + "/";
+    }
 
     startBtn.onclick = function() {
         ws.send(JSON.stringify({

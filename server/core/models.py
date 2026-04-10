@@ -1,5 +1,3 @@
-from django.db import models
-
 
 from django.db import models
 
@@ -30,3 +28,6 @@ class Player(models.Model):
     score = models.IntegerField(default=0)
     session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name='players')
 
+
+class Meta:
+    unique_together = ('name', 'session')
