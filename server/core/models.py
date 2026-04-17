@@ -41,6 +41,14 @@ class Player(models.Model):
     score = models.IntegerField(default=0)
     session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name='players')
 
+    class Meta:
+        unique_together = ('name', 'session')
 
-class Meta:
-    unique_together = ('name', 'session')
+
+class PlayerAnswer(models.Model):
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="answers")
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="player_answers")
+    selected_answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("player", "question")

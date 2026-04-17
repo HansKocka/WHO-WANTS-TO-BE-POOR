@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ quiz.title }} | Game</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #1900A8;
+            color: white;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+            min-height: 100vh;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        .panel {
+            background: rgba(77, 98, 245, 0.35);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+        h1 {
+            color: #EFDD30;
+        }
+        .pin {
+            font-size: 28px;
+            font-weight: bold;
+            color: #EFDD30;
+            margin-bottom: 16px;
+        }
+        .player-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .player-list li {
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .question-card {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .answers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .answer {
+            padding: 14px;
+            border-radius: 12px;
+            background: #2a2aff;
+        }
+        .meta {
+            color: #d9ddff;
+            margin-bottom: 24px;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .status-box {
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #EFDD30;
+            min-height: 24px;
+        }
+        @media (max-width: 800px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        .answer {
+            border: none;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .answer:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .end-link {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 12px;
+            text-decoration: none;
+            background: #EFDD30;
+            color: #1900A8;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="panel">
+            <h2>Session</h2>
+            <div class="pin">{{ session.pin }}</div>
+            <p class="meta">Players in this lobby:</p>
+            <ul class="player-list" id="players-list">
+                {% for player in players %}
+                <li>{{ player.name }}</li>
+                {% empty %}
+                <li>No players joined yet.</li>
+                {% endfor %}
+            </ul>
+        </aside>
+
+        <main class="panel">
+            <h1>{{ quiz.title }}</h1>
+            <div class="toolbar">
+                <p class="meta">This page opens for the host and every joined player when the host starts the game.</p>
+                <a class="end-link" href="/leaderboard/{{ session.pin }}/">Konec</a>
+            </div>
+            <div class="status-box" id="answer-status"></div>
+
+            {% for question in questions %}
+            <section class="question-card" data-question-id="{{ question.id }}">
+                <h3>Question {{ forloop.counter }}</h3>
+                <p>{{ question.text }}</p>
+                <div class="answers">
+                    {% for answer in question.answer_set.all %}
+                    <button
+                        class="answer"
+                        type="button"
+                        data-question-id="{{ question.id }}"
+                        data-answer-id="{{ answer.id }}"
+                    >
+                        {{ answer.text }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </section>
+            {% empty %}
+            <p>This quiz has no questions yet.</p>
+            {% endfor %}
+        </main>
+    </div>
+
+    <script>
+        const sessionPin = "{{ session.pin }}";
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${protocol}://${window.location.host}/ws/quiz/${sessionPin}/`);
+        const playersList = document.getElementById('players-list');
+        const answerStatus = document.getElementById('answer-status');
+        const storedSessionPin = sessionStorage.getItem('sessionPin');
+        const playerName = storedSessionPin === sessionPin ? sessionStorage.getItem('playerName') : null;
+        const answerButtons = document.querySelectorAll('.answer');
+
+        function getCookie(name) {
+            const cookieValue = document.cookie
+                .split('; ')
+                .find(row => row.startsWith(name + '='));
+            return cookieValue ? decodeURIComponent(cookieValue.split('=')[1]) : null;
+        }
+
+        function renderPlayers(players) {
+            if (!players.length) {
+                playersList.innerHTML = "<li>No players joined yet.</li>";
+                return;
+            }
+
+            playersList.innerHTML = "";
+            players.forEach((name) => {
+                const li = document.createElement("li");
+                li.textContent = name;
+                playersList.appendChild(li);
+            });
+        }
+
+        async function refreshPlayers() {
+            try {
+                const response = await fetch(`/sessions/${sessionPin}/players/`);
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                renderPlayers(data.players || []);
+            } catch (error) {
+                console.error("Failed to refresh players", error);
+            }
+        }
+
+        ws.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === "players_update") {
+                renderPlayers(data.players || []);
+            }
+        };
+
+        if (!playerName) {
+            answerStatus.textContent = "Host mode: answers are disabled on this screen.";
+            answerButtons.forEach((button) => {
+                button.disabled = true;
+            });
+        } else {
+            answerStatus.textContent = `Player: ${playerName}`;
+        }
+
+        answerButtons.forEach((button) => {
+            button.addEventListener('click', async function() {
+                if (!playerName) {
+                    return;
+                }
+
+                const questionId = button.dataset.questionId;
+                const questionCard = button.closest('[data-question-id]');
+                const questionButtons = questionCard.querySelectorAll('.answer');
+
+                const response = await fetch(`/game/${sessionPin}/answer/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        player_name: playerName,
+                        question_id: questionId,
+                        answer_id: button.dataset.answerId
+                    })
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result.ok) {
+                    answerStatus.textContent = result.error || 'Answer could not be saved.';
+                    return;
+                }
+
+                questionButtons.forEach((item) => {
+                    item.disabled = true;
+                });
+
+                answerStatus.textContent = result.correct
+                    ? `Correct answer. Score: ${result.score}`
+                    : `Wrong answer. Score: ${result.score}`;
+            });
+        });
+
+        refreshPlayers();
+        window.setInterval(refreshPlayers, 2000);
+    </script>
+</body>
+</html>

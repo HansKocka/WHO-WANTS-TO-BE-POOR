@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ quiz.title }} | Leaderboard</title>
+    <style>
+        body {
+            margin: 0;
+            background: #1900A8;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+        h1 {
+            text-align: center;
+            color: #EFDD30;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #d9ddff;
+            margin-bottom: 30px;
+        }
+        .board {
+            background: rgba(77, 98, 245, 0.35);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 80px 1fr 120px;
+            gap: 16px;
+            align-items: center;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            margin-bottom: 12px;
+        }
+        .row.header {
+            background: rgba(239, 221, 48, 0.18);
+            color: #EFDD30;
+            font-weight: bold;
+        }
+        .score {
+            text-align: right;
+            font-weight: bold;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            text-decoration: none;
+            background: #EFDD30;
+            color: #1900A8;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <h1>Leaderboard</h1>
+        <p class="subtitle">{{ quiz.title }} | Session {{ session.pin }}</p>
+
+        <div class="board">
+            <div class="row header">
+                <div>#</div>
+                <div>Player</div>
+                <div class="score">Points</div>
+            </div>
+
+            {% for player in players %}
+            <div class="row">
+                <div>{{ forloop.counter }}</div>
+                <div>{{ player.name }}</div>
+                <div class="score">{{ player.score }}</div>
+            </div>
+            {% empty %}
+            <div class="row">
+                <div>-</div>
+                <div>No players</div>
+                <div class="score">0</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <a class="back-link" href="/game/{{ session.pin }}/">Back to game</a>
+    </div>
+</body>
+</html>

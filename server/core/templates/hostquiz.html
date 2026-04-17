@@ -64,32 +64,55 @@
 <h2>Your game PIN: {{ session.pin }}</h2>
 
 <h3>Players connected:</h3>
-<ul id="players"></ul>
+<ul id="players-list">
+    {% for player in players %}
+    <li>{{ player.name }}</li>
+    {% endfor %}
+</ul>
 
 <button id="start-btn">Start Game</button>
 
 <script>
     const sessionPin = "{{ session.pin }}";
-    const ws = new WebSocket(`ws://${window.location.host}/ws/quiz/${sessionPin}/`);
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(`${protocol}://${window.location.host}/ws/quiz/${sessionPin}/`);
 
     const playersList = document.getElementById('players-list');
     const startBtn = document.getElementById('start-btn');
+
+    function renderPlayers(players) {
+        playersList.innerHTML = "";
+
+        players.forEach(name => {
+            const li = document.createElement("li");
+            li.textContent = name;
+            playersList.appendChild(li);
+        });
+    }
+
+    async function refreshPlayers() {
+        try {
+            const response = await fetch(`/sessions/${sessionPin}/players/`);
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            renderPlayers(data.players || []);
+        } catch (error) {
+            console.error("Failed to load players:", error);
+        }
+    }
 
     ws.onmessage = function(e) {
         const data = JSON.parse(e.data);
 
         if (data.type === "players_update") {
-            playersList.innerHTML = "";
-
-            data.players.forEach(name => {
-            const li = document.createElement("li");
-            li.textContent = name;
-            playersList.appendChild(li);
-            });
+            renderPlayers(data.players || []);
         }
 
         if (data.type === "start") {
-            window.location.href = "/game/" + sessionPin + "/";
+            window.location.href = `/game/${data.session_pin || sessionPin}/`;
         }
     };
 
@@ -98,6 +121,9 @@
             type: "start"
         }));
     };
+
+    refreshPlayers();
+    window.setInterval(refreshPlayers, 2000);
 </script>
 </body>
 </html>

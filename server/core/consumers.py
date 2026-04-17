@@ -31,14 +31,6 @@ class QuizConsumer(AsyncWebsocketConsumer):
         elif data["type"] == "start":
             await self.start_game()
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                "type": "quiz_message",
-                "message": data
-            }
-        )
-
     async def join_game(self, data):
         from .models import GameSession, Player
 
@@ -46,7 +38,7 @@ class QuizConsumer(AsyncWebsocketConsumer):
             pin=self.session_pin
         )
 
-        await sync_to_async(Player.objects.create)(
+        await sync_to_async(Player.objects.get_or_create)(
             name=data["name"],
             session=session
         )
@@ -65,11 +57,18 @@ class QuizConsumer(AsyncWebsocketConsumer):
         )
 
     async def start_game(self):
+        from .models import GameSession
+
+        session = await sync_to_async(GameSession.objects.get)(pin=self.session_pin)
+        session.state = "question"
+        await sync_to_async(session.save)()
+
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 "type": "quiz_message",
-                "event_type": "start"
+                "event_type": "start",
+                "session_pin": self.session_pin,
             }
         )
 
@@ -77,5 +76,6 @@ class QuizConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "type": event.get("event_type"),
             "players": event.get("players"),
-            "name": event.get("name")
+            "name": event.get("name"),
+            "session_pin": event.get("session_pin"),
         }))
