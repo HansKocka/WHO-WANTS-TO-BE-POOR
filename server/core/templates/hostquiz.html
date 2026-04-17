@@ -64,13 +64,13 @@
 <h2>Your game PIN: {{ session.pin }}</h2>
 
 <h3>Players connected:</h3>
-<ul id="players-list"></ul>
+<ul id="players"></ul>
 
 <button id="start-btn">Start Game</button>
 
 <script>
     const sessionPin = "{{ session.pin }}";
-    const ws = new WebSocket(`wss://${window.location.host}/ws/quiz/${sessionPin}/`);
+    const ws = new WebSocket(`ws://${window.location.host}/ws/quiz/${sessionPin}/`);
 
     const playersList = document.getElementById('players-list');
     const startBtn = document.getElementById('start-btn');
@@ -82,19 +82,20 @@
             playersList.innerHTML = "";
 
             data.players.forEach(name => {
-                const li = document.createElement("li");
-                li.textContent = name;
-                playersList.appendChild(li);
+            const li = document.createElement("li");
+            li.textContent = name;
+            playersList.appendChild(li);
             });
         }
 
-    if (data.type === "start") {
-        window.location.href = "/game/" + sessionPin + "/";
-    }
+        if (data.type === "start") {
+            window.location.href = "/game/" + sessionPin + "/";
+        }
+    };
 
     startBtn.onclick = function() {
         ws.send(JSON.stringify({
-            "action": "start"
+            type: "start"
         }));
     };
 </script>

@@ -22,6 +22,19 @@ class GameSession(models.Model):
     pin = models.CharField(max_length=6, unique=True)
     is_active = models.BooleanField(default=True)
 
+    current_question = models.IntegerField(default=0)
+
+    state = models.CharField(
+        max_length=20,
+        choices=[
+            ("waiting", "Waiting"),
+            ("question", "Question"),
+            ("results", "Results"),
+            ("finished", "Finished"),
+        ],
+        default="waiting"
+    )
+
 
 class Player(models.Model):
     name = models.CharField(max_length=100)
