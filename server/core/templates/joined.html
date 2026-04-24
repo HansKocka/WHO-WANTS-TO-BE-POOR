@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ quiz.title }} | Game</title>
+    <title>{{ quiz.title }} | Joined</title>
     <style>
         body {
             margin: 0;
@@ -12,7 +12,7 @@
         }
         .layout {
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 280px 1fr;
             gap: 24px;
             min-height: 100vh;
             padding: 24px;
@@ -29,12 +29,6 @@
         }
         h1 {
             color: #EFDD30;
-        }
-        .pin {
-            font-size: 28px;
-            font-weight: bold;
-            color: #EFDD30;
-            margin-bottom: 16px;
         }
         .player-list {
             list-style: none;
@@ -63,18 +57,11 @@
             padding: 14px;
             border-radius: 12px;
             background: #2a2aff;
-        }
-        .meta {
-            color: #d9ddff;
-            margin-bottom: 24px;
-        }
-        .toolbar {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
+            border: none;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+            font-size: 16px;
         }
         .status-box {
             padding: 12px 16px;
@@ -82,31 +69,25 @@
             background: rgba(255, 255, 255, 0.12);
             color: #EFDD30;
             min-height: 24px;
+            margin-bottom: 24px;
+        }
+        .empty-state {
+            padding: 24px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #d9ddff;
+            text-align: center;
+        }
+        .locked-state {
+            padding: 20px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffd4d4;
         }
         @media (max-width: 800px) {
             .layout {
                 grid-template-columns: 1fr;
             }
-        }
-        .answer {
-            border: none;
-            color: white;
-            text-align: left;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .answer:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .end-link {
-            display: inline-block;
-            padding: 12px 18px;
-            border-radius: 12px;
-            text-decoration: none;
-            background: #EFDD30;
-            color: #1900A8;
-            font-weight: bold;
         }
     </style>
 </head>
@@ -117,9 +98,9 @@
 
     <div class="layout">
         <aside class="panel">
-            <h2>Session</h2>
-            <div class="pin">{{ session.pin }}</div>
-            <p class="meta">Players in this lobby:</p>
+            <h2>Joined Session</h2>
+            <p>PIN: <strong>{{ session.pin }}</strong></p>
+            <p>Players:</p>
             <ul class="player-list" id="players-list">
                 {% for player in players %}
                 <li>{{ player.name }}</li>
@@ -131,10 +112,6 @@
 
         <main class="panel">
             <h1>{{ quiz.title }}</h1>
-            <div class="toolbar">
-                <p class="meta">This page opens for the host and every joined player when the host starts the game.</p>
-                <button class="end-link" id="end-btn" type="button">Konec</button>
-            </div>
             <div class="status-box" id="answer-status"></div>
 
             {% for question in questions %}
@@ -162,14 +139,15 @@
 
     <script>
         const sessionPin = "{{ session.pin }}";
+        const urlPlayerName = "{{ player_name|escapejs }}";
+        const playerName = urlPlayerName || localStorage.getItem("player_name");
+        const storedSessionPin = localStorage.getItem("session_pin");
+        const answerStatus = document.getElementById("answer-status");
+        const playersList = document.getElementById("players-list");
+        const answerButtons = document.querySelectorAll(".answer");
+        const csrfInput = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]');
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const ws = new WebSocket(`${protocol}://${window.location.host}/ws/quiz/${sessionPin}/`);
-        const playersList = document.getElementById('players-list');
-        const answerStatus = document.getElementById('answer-status');
-        const endBtn = document.getElementById('end-btn');
-        const playerName = null;
-        const answerButtons = document.querySelectorAll('.answer');
-        const csrfInput = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]');
 
         function getCookie(name) {
             const cookieValue = document.cookie
@@ -202,8 +180,82 @@
                 const data = await response.json();
                 renderPlayers(data.players || []);
             } catch (error) {
-                console.error("Failed to refresh players", error);
+                console.error("Failed to refresh players:", error);
             }
+        }
+
+        function answeredStorageKey() {
+            return playerName ? `answered_questions_${sessionPin}_${playerName}` : null;
+        }
+
+        function replaceQuestionsWithMessage(message, className = "locked-state") {
+            const mainPanel = document.querySelector("main.panel");
+            document.querySelectorAll("[data-question-id]").forEach((card) => card.remove());
+
+            const messageBox = document.createElement("div");
+            messageBox.className = className;
+            messageBox.textContent = message;
+            mainPanel.appendChild(messageBox);
+        }
+
+        function getAnsweredQuestions() {
+            const key = answeredStorageKey();
+            if (!key) {
+                return [];
+            }
+
+            try {
+                return JSON.parse(localStorage.getItem(key) || "[]");
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveAnsweredQuestion(questionId) {
+            const key = answeredStorageKey();
+            if (!key) {
+                return;
+            }
+
+            const answered = getAnsweredQuestions();
+            if (!answered.includes(questionId)) {
+                answered.push(questionId);
+                localStorage.setItem(key, JSON.stringify(answered));
+            }
+        }
+
+        function hideQuestion(questionCard) {
+            questionCard.remove();
+
+            const remainingQuestions = document.querySelectorAll("[data-question-id]");
+            if (!remainingQuestions.length) {
+                const doneMessage = document.createElement("div");
+                doneMessage.className = "empty-state";
+                doneMessage.textContent = "You answered all available questions.";
+                document.querySelector("main.panel").appendChild(doneMessage);
+            }
+        }
+
+        function hideAlreadyAnsweredQuestions() {
+            const answered = getAnsweredQuestions();
+            if (!answered.length) {
+                return;
+            }
+
+            document.querySelectorAll("[data-question-id]").forEach((card) => {
+                if (answered.includes(card.dataset.questionId)) {
+                    hideQuestion(card);
+                }
+            });
+        }
+
+        if (!playerName) {
+            answerStatus.textContent = "Player was not found for this session.";
+            replaceQuestionsWithMessage("Player was not found for this session.");
+        } else {
+            answerStatus.textContent = `Player: ${playerName}`;
+            localStorage.setItem("player_name", playerName);
+            localStorage.setItem("session_pin", sessionPin);
         }
 
         ws.onmessage = function(e) {
@@ -212,33 +264,27 @@
                 renderPlayers(data.players || []);
             }
             if (data.type === "end") {
-                window.location.href = `/leaderboard/${data.session_pin || sessionPin}/`;
+                const encodedName = encodeURIComponent(playerName || "");
+                window.location.href = `/result/${data.session_pin || sessionPin}/?player_name=${encodedName}`;
             }
         };
 
-        answerStatus.textContent = "Host mode: answers are disabled on this screen.";
         answerButtons.forEach((button) => {
-            button.disabled = true;
-        });
-
-        answerButtons.forEach((button) => {
-            button.addEventListener('click', async function() {
+            button.addEventListener("click", async function() {
                 if (!playerName) {
                     return;
                 }
 
+                const questionCard = button.closest(".question-card");
                 const questionId = button.dataset.questionId;
-                const questionCard = button.closest('[data-question-id]');
-                const questionButtons = questionCard.querySelectorAll('.answer');
-
-                answerStatus.textContent = 'Saving answer...';
+                answerStatus.textContent = "Saving answer...";
 
                 try {
                     const response = await fetch(`/game/${sessionPin}/answer/`, {
-                        method: 'POST',
+                        method: "POST",
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfInput ? csrfInput.value : getCookie('csrftoken')
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": csrfInput ? csrfInput.value : getCookie("csrftoken")
                         },
                         body: JSON.stringify({
                             player_name: playerName,
@@ -257,13 +303,16 @@
                     }
 
                     if (!response.ok || !result.ok) {
-                        answerStatus.textContent = result.error || 'Answer could not be saved.';
+                        if (result.error === "You already answered this question.") {
+                            saveAnsweredQuestion(questionId);
+                            hideQuestion(questionCard);
+                        }
+                        answerStatus.textContent = result.error || "Answer could not be saved.";
                         return;
                     }
 
-                    questionButtons.forEach((item) => {
-                        item.disabled = true;
-                    });
+                    saveAnsweredQuestion(questionId);
+                    hideQuestion(questionCard);
 
                     answerStatus.textContent = result.correct
                         ? `Correct answer. Score: ${result.score}`
@@ -274,12 +323,7 @@
             });
         });
 
-        endBtn.addEventListener('click', function() {
-            ws.send(JSON.stringify({
-                type: "end"
-            }));
-        });
-
+        hideAlreadyAnsweredQuestions();
         refreshPlayers();
         window.setInterval(refreshPlayers, 2000);
     </script>

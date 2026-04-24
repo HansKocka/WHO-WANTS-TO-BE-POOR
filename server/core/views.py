@@ -1,6 +1,8 @@
 import json
+from django.db import OperationalError, ProgrammingError
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from .models import Quiz, Answer, Question, GameSession, Player, PlayerAnswer
 from .utils import generate_pin
 
@@ -111,10 +113,6 @@ def host(request, quiz_id):
     })
 
 
-def my(request):
-    return render(request, "my-quiz.html")
-
-
 def session_players(request, session_pin):
     session = get_object_or_404(GameSession, pin=session_pin)
     players = list(session.players.order_by("id").values_list("name", flat=True))
@@ -133,53 +131,81 @@ def game(request, session_pin):
         "quiz": session.quiz,
         "questions": questions,
         "players": session.players.order_by("id"),
+        "is_host": True,
     })
 
 
+@csrf_exempt
 def submit_answer(request, session_pin):
-    if request.method != "POST":
-        return JsonResponse({"ok": False, "error": "POST required."}, status=405)
-
-    session = get_object_or_404(GameSession.objects.select_related("quiz"), pin=session_pin)
-
     try:
-        payload = json.loads(request.body.decode("utf-8"))
-    except json.JSONDecodeError:
-        return JsonResponse({"ok": False, "error": "Invalid JSON."}, status=400)
+        if request.method != "POST":
+            return JsonResponse({"ok": False, "error": "POST required."}, status=405)
 
-    player_name = (payload.get("player_name") or "").strip()
-    question_id = payload.get("question_id")
-    answer_id = payload.get("answer_id")
+        session = get_object_or_404(GameSession.objects.select_related("quiz"), pin=session_pin)
 
-    if not player_name or not question_id or not answer_id:
-        return JsonResponse({"ok": False, "error": "Missing answer data."}, status=400)
+        try:
+            payload = json.loads(request.body.decode("utf-8"))
+        except json.JSONDecodeError:
+            return JsonResponse({"ok": False, "error": "Invalid JSON."}, status=400)
 
-    player = get_object_or_404(Player, session=session, name=player_name)
-    question = get_object_or_404(Question, id=question_id, quiz=session.quiz)
-    answer = get_object_or_404(Answer, id=answer_id, question=question)
+        player_name = (payload.get("player_name") or "").strip()
+        question_id = payload.get("question_id")
+        answer_id = payload.get("answer_id")
 
-    player_answer, created = PlayerAnswer.objects.get_or_create(
-        player=player,
-        question=question,
-        defaults={"selected_answer": answer},
-    )
+        if not player_name or not question_id or not answer_id:
+            return JsonResponse({"ok": False, "error": "Missing answer data."}, status=400)
 
-    if not created:
+        player = Player.objects.filter(session=session, name=player_name).first()
+        if not player:
+            return JsonResponse({"ok": False, "error": "Player was not found."}, status=404)
+
+        question = Question.objects.filter(id=question_id, quiz=session.quiz).first()
+        if not question:
+            return JsonResponse({"ok": False, "error": "Question was not found."}, status=404)
+
+        answer = Answer.objects.filter(id=answer_id, question=question).first()
+        if not answer:
+            return JsonResponse({"ok": False, "error": "Answer was not found."}, status=404)
+
+        try:
+            player_answer, created = PlayerAnswer.objects.get_or_create(
+                player=player,
+                question=question,
+                defaults={"selected_answer": answer},
+            )
+        except (OperationalError, ProgrammingError):
+            answered_key = f"answered_{session_pin}_{player_name}"
+            answered_questions = request.session.get(answered_key, [])
+
+            if question.id in answered_questions:
+                created = False
+            else:
+                answered_questions.append(question.id)
+                request.session[answered_key] = answered_questions
+                request.session.modified = True
+                created = True
+
+        if not created:
+            return JsonResponse({
+                "ok": False,
+                "error": "You already answered this question.",
+                "score": player.score,
+            }, status=400)
+
+        if answer.is_correct:
+            player.score += 1
+            player.save(update_fields=["score"])
+
+        return JsonResponse({
+            "ok": True,
+            "correct": answer.is_correct,
+            "score": player.score,
+        })
+    except Exception as error:
         return JsonResponse({
             "ok": False,
-            "error": "You already answered this question.",
-            "score": player.score,
-        }, status=400)
-
-    if answer.is_correct:
-        player.score += 1
-        player.save(update_fields=["score"])
-
-    return JsonResponse({
-        "ok": True,
-        "correct": answer.is_correct,
-        "score": player.score,
-    })
+            "error": f"Server error: {error}",
+        }, status=500)
 
 
 def leaderboard(request, session_pin):
@@ -196,3 +222,38 @@ def leaderboard(request, session_pin):
         "players": players,
     })
 
+
+def joined(request, pin):
+    session = get_object_or_404(
+        GameSession.objects.select_related("quiz"),
+        pin=pin
+    )
+    questions = Question.objects.filter(quiz=session.quiz).prefetch_related("answer_set")
+    player_name = (request.GET.get("player_name") or "").strip()
+
+    return render(request, "joined.html", {
+        "session": session,
+        "quiz": session.quiz,
+        "questions": questions,
+        "players": session.players.order_by("id"),
+        "player_name": player_name,
+    })
+
+
+def result(request, session_pin):
+    player_name = (request.GET.get("player_name") or "").strip()
+    session = get_object_or_404(
+        GameSession.objects.select_related("quiz"),
+        pin=session_pin
+    )
+
+    player = None
+    if player_name:
+        player = Player.objects.filter(session=session, name=player_name).first()
+
+    return render(request, "result.html", {
+        "session": session,
+        "quiz": session.quiz,
+        "player": player,
+        "player_name": player_name,
+    })

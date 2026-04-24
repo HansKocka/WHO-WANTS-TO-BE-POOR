@@ -3,6 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <title>Create Quiz</title>
+    <style>
+        :root {
+            --bg: #1900A8;
+            --panel: rgba(77, 98, 245, 0.35);
+            --panel-strong: #3b31d1;
+            --accent: #EFDD30;
+            --text: #ffffff;
+            --muted: #d9ddff;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 32px 16px 48px;
+            font-family: Arial, sans-serif;
+            background: radial-gradient(circle at top, #3422d7 0%, var(--bg) 60%);
+            color: var(--text);
+        }
+        .page {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        h1 {
+            margin: 0 0 10px;
+            text-align: center;
+            color: var(--accent);
+            font-size: 40px;
+        }
+        .intro {
+            margin: 0 0 28px;
+            text-align: center;
+            color: var(--muted);
+        }
+        form {
+            background: rgba(15, 9, 86, 0.35);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+        }
+        .field-group {
+            margin-bottom: 22px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        input,
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.95);
+            font-size: 16px;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .questions {
+            display: grid;
+            gap: 18px;
+        }
+        .question-card {
+            background: var(--panel);
+            border-radius: 20px;
+            padding: 22px;
+        }
+        .question-card h3 {
+            margin-top: 0;
+            margin-bottom: 18px;
+            color: var(--text);
+        }
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+        .actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 28px;
+        }
+        button {
+            border: none;
+            border-radius: 14px;
+            padding: 14px 22px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .secondary-btn {
+            background: var(--panel-strong);
+            color: var(--text);
+        }
+        .primary-btn {
+            background: var(--accent);
+            color: var(--bg);
+        }
+        @media (max-width: 720px) {
+            h1 {
+                font-size: 32px;
+            }
+            form {
+                padding: 20px;
+            }
+            .answers-grid {
+                grid-template-columns: 1fr;
+            }
+            .actions {
+                flex-direction: column;
+            }
+            .actions button {
+                width: 100%;
+            }
+        }
+    </style>
 
     <script>
         let questionCount = 1;
@@ -11,27 +134,44 @@
             questionCount++;
 
             const container = document.getElementById("questions");
-
             const div = document.createElement("div");
+            div.className = "question-card";
             div.innerHTML = `
-                <hr>
                 <h3>Question ${questionCount}</h3>
 
-                <input type="text" name="question_${questionCount}" placeholder="Question"><br><br>
+                <div class="field-group">
+                    <label for="question_${questionCount}">Question text</label>
+                    <input id="question_${questionCount}" type="text" name="question_${questionCount}" placeholder="Write the question">
+                </div>
 
-                <input type="text" name="answer1_${questionCount}" placeholder="Answer 1"><br>
-                <input type="text" name="answer2_${questionCount}" placeholder="Answer 2"><br>
-                <input type="text" name="answer3_${questionCount}" placeholder="Answer 3"><br>
-                <input type="text" name="answer4_${questionCount}" placeholder="Answer 4"><br><br>
+                <div class="answers-grid">
+                    <div class="field-group">
+                        <label for="answer1_${questionCount}">Answer 1</label>
+                        <input id="answer1_${questionCount}" type="text" name="answer1_${questionCount}" placeholder="First answer">
+                    </div>
+                    <div class="field-group">
+                        <label for="answer2_${questionCount}">Answer 2</label>
+                        <input id="answer2_${questionCount}" type="text" name="answer2_${questionCount}" placeholder="Second answer">
+                    </div>
+                    <div class="field-group">
+                        <label for="answer3_${questionCount}">Answer 3</label>
+                        <input id="answer3_${questionCount}" type="text" name="answer3_${questionCount}" placeholder="Third answer">
+                    </div>
+                    <div class="field-group">
+                        <label for="answer4_${questionCount}">Answer 4</label>
+                        <input id="answer4_${questionCount}" type="text" name="answer4_${questionCount}" placeholder="Fourth answer">
+                    </div>
+                </div>
 
-                <label>Correct answer:</label>
-                <select name="correct_${questionCount}">
-                    <option value="1">Answer 1</option>
-                    <option value="2">Answer 2</option>
-                    <option value="3">Answer 3</option>
-                    <option value="4">Answer 4</option>
-                </select>
-                <br><br>
+                <div class="field-group">
+                    <label for="correct_${questionCount}">Correct answer</label>
+                    <select id="correct_${questionCount}" name="correct_${questionCount}">
+                        <option value="1">Answer 1</option>
+                        <option value="2">Answer 2</option>
+                        <option value="3">Answer 3</option>
+                        <option value="4">Answer 4</option>
+                    </select>
+                </div>
             `;
 
             container.appendChild(div);
@@ -39,40 +179,63 @@
     </script>
 </head>
 <body>
+<div class="page">
+    <h1>Create Quiz</h1>
+    <p class="intro">Build your quiz, add questions, and choose the correct answer for each one.</p>
 
-<h1>Create Quiz</h1>
+    <form method="POST">
+        {% csrf_token %}
 
-<form method="POST">
-    {% csrf_token %}
+        <div class="field-group">
+            <label for="title">Quiz title</label>
+            <input id="title" type="text" name="title" placeholder="Write your quiz title">
+        </div>
 
-    <input type="text" name="title" placeholder="Quiz title"><br><br>
+        <div id="questions" class="questions">
+            <div class="question-card">
+                <h3>Question 1</h3>
 
-    <div id="questions">
-        <h3>Question 1</h3>
+                <div class="field-group">
+                    <label for="question_1">Question text</label>
+                    <input id="question_1" type="text" name="question_1" placeholder="Write the question">
+                </div>
 
-        <input type="text" name="question_1" placeholder="Question"><br><br>
+                <div class="answers-grid">
+                    <div class="field-group">
+                        <label for="answer1_1">Answer 1</label>
+                        <input id="answer1_1" type="text" name="answer1_1" placeholder="First answer">
+                    </div>
+                    <div class="field-group">
+                        <label for="answer2_1">Answer 2</label>
+                        <input id="answer2_1" type="text" name="answer2_1" placeholder="Second answer">
+                    </div>
+                    <div class="field-group">
+                        <label for="answer3_1">Answer 3</label>
+                        <input id="answer3_1" type="text" name="answer3_1" placeholder="Third answer">
+                    </div>
+                    <div class="field-group">
+                        <label for="answer4_1">Answer 4</label>
+                        <input id="answer4_1" type="text" name="answer4_1" placeholder="Fourth answer">
+                    </div>
+                </div>
 
-        <input type="text" name="answer1_1" placeholder="Answer 1"><br>
-        <input type="text" name="answer2_1" placeholder="Answer 2"><br>
-        <input type="text" name="answer3_1" placeholder="Answer 3"><br>
-        <input type="text" name="answer4_1" placeholder="Answer 4"><br><br>
+                <div class="field-group">
+                    <label for="correct_1">Correct answer</label>
+                    <select id="correct_1" name="correct_1">
+                        <option value="1">Answer 1</option>
+                        <option value="2">Answer 2</option>
+                        <option value="3">Answer 3</option>
+                        <option value="4">Answer 4</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-        <label>Correct answer:</label>
-        <select name="correct_1">
-            <option value="1">Answer 1</option>
-            <option value="2">Answer 2</option>
-            <option value="3">Answer 3</option>
-            <option value="4">Answer 4</option>
-        </select>
-
-        <br><br>
-    </div>
-
-    <button type="button" onclick="addQuestion()">➕ Add another question</button>
-
-    <br><br>
-    <button type="submit">SAVE QUIZ</button>
-</form>
-
+        <div class="actions">
+            <button class="secondary-btn" type="button" onclick="addQuestion()">Add another question</button>
+            <button class="primary-btn" type="submit">Save quiz</button>
+        </div>
+    </form>
+</div>
 </body>
 </html>

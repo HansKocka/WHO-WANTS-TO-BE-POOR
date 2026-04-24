@@ -24,12 +24,16 @@ class QuizConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
+        msg_type = data.get("type")
 
-        if data["type"] == "join":
+        if msg_type == "join":
             await self.join_game(data)
-
-        elif data["type"] == "start":
+        elif msg_type == "start":
             await self.start_game()
+        elif msg_type == "end":
+            await self.end_game()
+        elif msg_type == "answer":
+            await self.handle_answer(data)
 
     async def join_game(self, data):
         from .models import GameSession, Player
@@ -59,7 +63,10 @@ class QuizConsumer(AsyncWebsocketConsumer):
     async def start_game(self):
         from .models import GameSession
 
-        session = await sync_to_async(GameSession.objects.get)(pin=self.session_pin)
+        session = await sync_to_async(GameSession.objects.get)(
+            pin=self.session_pin
+        )
+
         session.state = "question"
         await sync_to_async(session.save)()
 
@@ -68,14 +75,58 @@ class QuizConsumer(AsyncWebsocketConsumer):
             {
                 "type": "quiz_message",
                 "event_type": "start",
-                "session_pin": self.session_pin,
+                "session_pin": self.session_pin
             }
         )
+
+    async def end_game(self):
+        from .models import GameSession
+
+        session = await sync_to_async(GameSession.objects.get)(
+            pin=self.session_pin
+        )
+
+        session.state = "finished"
+        await sync_to_async(session.save)()
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "quiz_message",
+                "event_type": "end",
+                "session_pin": self.session_pin
+            }
+        )
+
+    async def handle_answer(self, data):
+        from .models import Player, Answer
+
+        player = await sync_to_async(Player.objects.get)(
+            name=data["name"],
+            session__pin=self.session_pin
+        )
+
+        answer = await sync_to_async(Answer.objects.get)(
+            id=data["answer_id"]
+        )
+
+        correct = answer.is_correct
+
+        if correct:
+            player.score += 1
+            await sync_to_async(player.save)()
+
+        await self.send(text_data=json.dumps({
+            "type": "answer_result",
+            "correct": correct,
+            "score": player.score
+        }))
 
     async def quiz_message(self, event):
         await self.send(text_data=json.dumps({
             "type": event.get("event_type"),
             "players": event.get("players"),
-            "name": event.get("name"),
+            "question": event.get("question"),
+            "answers": event.get("answers"),
             "session_pin": event.get("session_pin"),
         }))
