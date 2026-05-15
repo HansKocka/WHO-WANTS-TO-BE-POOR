@@ -9,6 +9,27 @@
         color: white;
 
         }
+        .top-right{
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        margin: 0;
+        }
+        .top-right a,
+        .top-right button{
+        background: #EFDD30;
+        color: #1900A8;
+        padding: 10px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        }
+        .top-right form{
+        margin: 0;
+        }
         h1{
         text-align: center;
         color: #EFDD30;
@@ -29,10 +50,24 @@
     </style>
 </head>
 <body>
+    <div class="top-right">
+        {% if user.is_authenticated %}
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit">LOGOUT</button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}">LOGIN</a>
+        {% endif %}
+    </div>
     <h1>WHO WANTS TO BE POOR</h1>
     <div><a href="{% url 'create' %}">CREATE</a></div>
-    <div><a href="{% url 'quiz' %}">QUIZES</a></div>
+    <div><a href="{% url 'quiz' %}">QUIZZES</a></div>
+    <div><a href="{% url 'my_quizzes' %}">MY QUIZZES</a></div>
     <div><a href="{% url 'join' %}">JOIN</a></div>
+    {% if not user.is_authenticated %}
+        <div><a href="{% url 'register' %}">REGISTER</a></div>
+    {% endif %}
 
 </body>
 

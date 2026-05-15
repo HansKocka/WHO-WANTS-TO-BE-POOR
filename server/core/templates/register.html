@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>REGISTER</title>
+
+    <style>
+        body{
+            background:#1900A8;
+            font-family:Arial;
+        }
+
+        h1{
+            text-align:center;
+            color:#EFDD30;
+            margin-top:80px;
+        }
+
+        form{
+            width:300px;
+            margin:40px auto;
+            background:#2a2fff;
+            padding:20px;
+            border-radius:10px;
+            color:white;
+        }
+
+        input{
+            width:100%;
+            margin:10px 0;
+            padding:10px;
+        }
+
+        button{
+            width:100%;
+            padding:10px;
+            background:#EFDD30;
+            border:none;
+            font-weight:bold;
+        }
+
+        p{
+            text-align:center;
+            color:red;
+        }
+
+        a{
+            color:white;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>REGISTER</h1>
+
+{% if error %}
+<p>{{ error }}</p>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    <input name="username" placeholder="username" required>
+    <input name="password" type="password" placeholder="password" required>
+    <button>REGISTER</button>
+</form>
+
+<p><a href="{% url 'login' %}">Already have account? Login</a></p>
+
+</body>
+</html>

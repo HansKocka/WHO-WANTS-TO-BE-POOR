@@ -3,8 +3,11 @@ from django.db import OperationalError, ProgrammingError
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 from .models import Quiz, Answer, Question, GameSession, Player, PlayerAnswer
 from .utils import generate_pin
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
 
 
 def home(request):
@@ -19,16 +22,86 @@ def contact(request):
     return render(request, "contact.html")
 
 
+@login_required
+def my_quizzes(request):
+    quizzes = Quiz.objects.filter(owner=request.user).order_by("-id")
+
+    return render(request, "my_quizzes.html", {
+        "quizzes": quizzes
+    })
+
+
+def login_page(request):
+    if request.user.is_authenticated:
+        return redirect("my_quizzes")
+
+    error = None
+
+    if request.method == "POST":
+        username = (request.POST.get("username") or "").strip()
+        password = request.POST.get("password") or ""
+
+        if not username or not password:
+            error = "Fill in username and password"
+        else:
+            user = authenticate(request, username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+                return redirect("my_quizzes")
+            else:
+                error = "Wrong login"
+
+    return render(request, "login.html", {"error": error})
+
+
+def register_page(request):
+    if request.user.is_authenticated:
+        return redirect("my_quizzes")
+
+    error = None
+
+    if request.method == "POST":
+        username = (request.POST.get("username") or "").strip()
+        password = request.POST.get("password") or ""
+
+        if not username or not password:
+            error = "Fill in username and password"
+        elif User.objects.filter(username=username).exists():
+            error = "User already exists"
+        else:
+            user = User.objects.create_user(
+                username=username,
+                password=password
+            )
+            login(request, user)
+            return redirect("my_quizzes")
+
+    return render(request, "register.html", {"error": error})
+
+
+def logout_page(request):
+    logout(request)
+    return redirect("home_page")
+
+
+@login_required
 def create(request):
     if request.method == "POST":
-        title = request.POST.get("title")
-        new_quiz = Quiz.objects.create(title=title)
+        title = (request.POST.get("title") or "").strip()
+        if not title:
+            return render(request, "create.html", {
+                "error": "Quiz title is required."
+            })
+        new_quiz = Quiz.objects.create(
+            title=title,
+            owner=request.user
+        )
 
         i = 1
         while True:
             question_text = request.POST.get(f"question_{i}")
 
-            # pokud už další otázka není → konec
             if not question_text:
                 break
 
@@ -40,7 +113,7 @@ def create(request):
             correct = request.POST.get(f"correct_{i}")
 
             for j in range(1, 5):
-                answer_text = request.POST.get(f"answer{j}_{i}")
+                answer_text = (request.POST.get(f"answer{j}_{i}") or "").strip()
 
                 Answer.objects.create(
                     question=question,
@@ -50,7 +123,8 @@ def create(request):
 
             i += 1
 
-        return redirect("home_page")  # uprav podle svého
+        return redirect("my_quizzes")
+
     return render(request, "create.html")
 
 

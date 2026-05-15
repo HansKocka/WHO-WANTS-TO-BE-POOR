@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MY QUIZZES</title>
+
+    <style>
+        body{
+            background-color: #1900A8;
+            font-family: Arial;
+        }
+
+        h1{
+            text-align: center;
+            color: #EFDD30;
+            margin-top: 40px;
+        }
+
+        .quiz{
+            background-color: #2a2fff;
+            margin: 20px auto;
+            width: 60%;
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .quiz a{
+            color: #EFDD30;
+            font-size: 18px;
+            text-decoration: none;
+        }
+
+        .quiz a:hover{
+            text-decoration: underline;
+        }
+
+        .empty{
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>MY QUIZZES</h1>
+<p class="empty"><a href="{% url 'create' %}">Create new quiz</a></p>
+
+{% for quiz in quizzes %}
+    <div class="quiz">
+        <h2>{{ quiz.title }}</h2>
+        <a href="{% url 'quiz_detail' quiz.id %}">OPEN</a>
+    </div>
+{% empty %}
+    <p class="empty">You have no quizzes yet.</p>
+{% endfor %}
+
+</body>
+</html>

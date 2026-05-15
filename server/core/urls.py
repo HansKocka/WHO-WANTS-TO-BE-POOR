@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     home, about, contact, create, join, quiz, host, quiz_detail,
-    session_players, game, submit_answer, leaderboard, joined, result,
+    session_players, game, submit_answer, leaderboard, joined, result, my_quizzes, login_page, register_page,
+    logout_page
 )
 
 urlpatterns = [
@@ -19,4 +20,8 @@ urlpatterns = [
     path('result/<str:session_pin>/', result, name='result'),
     path('sessions/<str:session_pin>/players/', session_players, name='session_players'),
     path('quiz/<int:quiz_id>/', quiz_detail, name='quiz_detail'),
+    path("my-quizzes/", my_quizzes, name="my_quizzes"),
+    path("login/", login_page, name="login"),
+    path("register/", register_page, name="register"),
+    path("logout/", logout_page, name="logout"),
 ]

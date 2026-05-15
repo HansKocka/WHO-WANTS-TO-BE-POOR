@@ -1,3 +1,55 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
+from django.urls import reverse
 
-# Create your tests here.
+from .models import Quiz
+
+
+class AuthQuizTests(TestCase):
+    def test_register_logs_user_in(self):
+        response = self.client.post(reverse("register"), {
+            "username": "alice",
+            "password": "strong-pass-123",
+        })
+
+        self.assertRedirects(response, reverse("my_quizzes"))
+        self.assertEqual(self.client.session["_auth_user_id"], str(User.objects.get(username="alice").id))
+
+    def test_login_logs_user_in(self):
+        user = User.objects.create_user(username="alice", password="strong-pass-123")
+
+        response = self.client.post(reverse("login"), {
+            "username": "alice",
+            "password": "strong-pass-123",
+        })
+
+        self.assertRedirects(response, reverse("my_quizzes"))
+        self.assertEqual(self.client.session["_auth_user_id"], str(user.id))
+
+    def test_my_quizzes_shows_only_logged_in_users_quizzes(self):
+        alice = User.objects.create_user(username="alice", password="strong-pass-123")
+        bob = User.objects.create_user(username="bob", password="strong-pass-123")
+        alices_quiz = Quiz.objects.create(owner=alice, title="Alice quiz")
+        Quiz.objects.create(owner=bob, title="Bob quiz")
+
+        self.client.force_login(alice)
+        response = self.client.get(reverse("my_quizzes"))
+
+        self.assertContains(response, alices_quiz.title)
+        self.assertNotContains(response, "Bob quiz")
+
+    def test_create_assigns_logged_in_user_as_owner(self):
+        alice = User.objects.create_user(username="alice", password="strong-pass-123")
+        self.client.force_login(alice)
+
+        self.client.post(reverse("create"), {
+            "title": "Alice quiz",
+            "question_1": "Question?",
+            "answer1_1": "A",
+            "answer2_1": "B",
+            "answer3_1": "C",
+            "answer4_1": "D",
+            "correct_1": "1",
+        })
+
+        self.assertTrue(Quiz.objects.filter(owner=alice, title="Alice quiz").exists())
