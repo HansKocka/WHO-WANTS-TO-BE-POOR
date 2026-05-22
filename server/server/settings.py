@@ -25,7 +25,6 @@ SECRET_KEY = 'django-insecure-7suy1qxu8hp8*@e=_ljh1inya4f-uf2n5bn27*k$_mdqatf)@h
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -131,3 +130,10 @@ CHANNEL_LAYERS = {
 }
 
 LOGIN_URL = '/login/'
+
+ALLOWED_HOSTS = [
+    "192.168.0.229",
+    "192.168.0.230",
+    "localhost",
+    "127.0.0.1",
+]

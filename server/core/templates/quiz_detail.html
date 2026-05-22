@@ -4,57 +4,170 @@
     <meta charset="UTF-8">
     <title>{{ quiz.title }}</title>
     <style>
-        a{
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            background: #1900A8;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow-x: hidden;
+        }
+
+        main {
+            width: min(900px, calc(100% - 32px));
+            margin: 56px auto 48px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            color: #EFDD30;
+            font-size: clamp(42px, 8vw, 76px);
+            line-height: 0.95;
+            font-weight: 900;
+            overflow-wrap: anywhere;
+        }
+
+        .host-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: min(100%, 360px);
+            min-height: 74px;
+            margin-bottom: 34px;
+            padding: 14px 28px;
+            background: #EFDD30;
+            color: #1900A8;
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            font-size: clamp(24px, 5vw, 36px);
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #0D0067;
+            transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+        }
+
+        .host-button:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #0D0067;
+        }
+
+        .host-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #0D0067;
+        }
+
+        .question-list {
+            display: grid;
+            gap: 18px;
+            text-align: left;
+        }
+
+        .question-card {
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            background: #2200C8;
+            box-shadow: 0 8px 0 #0D0067;
+            overflow: hidden;
+        }
+
+        .question-title {
+            margin: 0;
+            padding: 18px 22px;
+            background: #EFDD30;
+            color: #1900A8;
+            font-size: clamp(22px, 4vw, 32px);
+            font-weight: 900;
+            overflow-wrap: anywhere;
+        }
+
+        .answer-list {
+            display: grid;
+            gap: 10px;
+            margin: 0;
+            padding: 18px;
+            list-style: none;
+        }
+
+        .answer-list li {
+            padding: 12px 14px;
+            border: 2px solid #4D62F5;
+            border-radius: 8px;
+            color: white;
             font-size: 20px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .empty-state {
+            padding: 28px;
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            color: #EFDD30;
+            font-size: 24px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 24px;
+            text-align: center;
+        }
+
+        footer a {
+            margin: 0 8px;
             color: white;
             text-decoration: none;
-        }
-        button{
             font-size: 18px;
-            padding: 10px 20px;
-            margin-top: 20px;
-            background-color: #EFDD30;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            font-weight: 400;
         }
-        button:hover{
-            background-color: #FFD700;
-        }
-        h1{
-            text-align: center;
-            color: #EFDD30;
-        }
-        body{
-            background-color: #1900A8;
-        }
-        div{
-            color: #4D62F5;
-            margin: 40px;
-            position: relative;
+
+        footer a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
+    <main>
+        <h1>{{ quiz.title }}</h1>
 
-    <h1>{{ quiz.title }}</h1>
+        <form action="{% url 'host' quiz.id %}" method="get">
+            <button class="host-button" type="submit">HOST QUIZ</button>
+        </form>
 
-    {% for question in questions %}
-        <div>
-            <strong>{{ question.text }}</strong>
+        <section class="question-list" aria-label="Quiz questions">
+            {% for question in questions %}
+                <article class="question-card">
+                    <h2 class="question-title">{{ question.text }}</h2>
 
-            {% for answer in question.answer_set.all %}
-                <div>
-                    - {{ answer.text }}
-                </div>
+                    <ul class="answer-list">
+                        {% for answer in question.answer_set.all %}
+                            <li>{{ answer.text }}</li>
+                        {% endfor %}
+                    </ul>
+                </article>
+            {% empty %}
+                <div class="empty-state">This quiz has no questions yet.</div>
             {% endfor %}
-        </div>
-    {% endfor %}
+        </section>
+    </main>
 
-    <!-- HOST QUIZ BUTTON -->
-    <form action="{% url 'host' quiz.id %}" method="get">
-    <button type="submit">HOST QUIZ</button>
-</form>
-
+    <footer>
+        <a href="{% url 'home_page' %}">home</a>
+        <a href="{% url 'my_quizzes' %}">my quizzes</a>
+        <a href="{% url 'quiz' %}">all quizzes</a>
+    </footer>
 </body>
 </html>

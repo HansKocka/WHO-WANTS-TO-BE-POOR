@@ -2,49 +2,122 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>QUIZES</title>
+    <title>Quizzes</title>
     <style>
-        a{
-        font-size: 20px;
-        color: white;
+        * {
+            box-sizing: border-box;
         }
-        h1{
-        text-align: center;
-        color: #EFDD30;
+
+        html {
+            overflow-x: hidden;
         }
-        body{
-        background-color: #1900A8;
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            background: #1900A8;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow-x: hidden;
         }
-        div{
-        color: #4D62F5;
-        margin: 40px;
-        position: relative;
+
+        main {
+            width: min(820px, calc(100% - 32px));
+            margin: 56px auto 48px;
+            text-align: center;
         }
-        footer{
-        position: relative;
-        top: 550px;
+
+        h1 {
+            margin: 0 0 34px;
+            color: #EFDD30;
+            font-size: clamp(42px, 8vw, 76px);
+            line-height: 0.95;
+            font-weight: 900;
+        }
+
+        .quiz-list {
+            display: grid;
+            gap: 18px;
+        }
+
+        .quiz-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 76px;
+            padding: 14px 22px;
+            background: #EFDD30;
+            color: #1900A8;
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: clamp(24px, 5vw, 38px);
+            font-weight: 900;
+            letter-spacing: 0;
+            overflow-wrap: anywhere;
+            box-shadow: 0 8px 0 #0D0067;
+            transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+        }
+
+        .quiz-button:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #0D0067;
+        }
+
+        .quiz-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #0D0067;
+        }
+
+        .empty-state {
+            padding: 28px;
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            color: #EFDD30;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 24px;
+            text-align: center;
+        }
+
+        footer a {
+            margin: 0 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 400;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
+    <main>
+        <h1>ALL QUIZZES</h1>
 
-    <h1>ALL QUIZES</h1>
-
-    {% for quiz in quizzes %}
-        <div>
-            <a href="{% url 'quiz_detail' quiz.id %}">
-                {{ quiz.title }}
-            </a>
+        <div class="quiz-list">
+            {% for quiz in quizzes %}
+                <a class="quiz-button" href="{% url 'quiz_detail' quiz.id %}">
+                    {{ quiz.title }}
+                </a>
+            {% empty %}
+                <div class="empty-state">No quizzes available</div>
+            {% endfor %}
         </div>
-    {% empty %}
-        <div>No quizzes available</div>
-    {% endfor %}
+    </main>
 
+    <footer>
+        <a href="{% url 'home_page' %}">home</a>
+    </footer>
 </body>
-
-<footer>
-    <a href="{% url 'about_page' %}">about</a>
-    <a href="{% url 'contact_page' %}">contact</a>
-</footer>
-
 </html>

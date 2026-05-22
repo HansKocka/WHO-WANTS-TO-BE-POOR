@@ -22,8 +22,19 @@
             position: relative;
         }
         footer {
-            position: relative;
-            top: 550px;
+            margin-top: 80px;
+            padding: 24px;
+            text-align: center;
+        }
+        footer a {
+            margin: 0 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 400;
+        }
+        footer a:hover {
+            text-decoration: underline;
         }
         /* Styl pro formulář */
         #join-form {
@@ -71,8 +82,7 @@
     </form>
 
     <footer>
-        <a href="{% url 'about_page' %}">about</a>
-        <a href="{% url 'contact_page' %}">contact</a>
+        <a href="{% url 'home_page' %}">home</a>
     </footer>
 
 <script>

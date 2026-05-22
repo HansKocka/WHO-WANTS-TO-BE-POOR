@@ -12,7 +12,7 @@
         }
         .layout {
             display: grid;
-            grid-template-columns: 280px 1fr;
+            grid-template-columns: 240px 1fr;
             gap: 24px;
             min-height: 100vh;
             padding: 24px;
@@ -29,6 +29,8 @@
         }
         h1 {
             color: #EFDD30;
+            font-size: clamp(34px, 5vw, 58px);
+            margin-bottom: 18px;
         }
         .player-list {
             list-style: none;
@@ -46,6 +48,7 @@
             padding: 20px;
             border-radius: 14px;
             background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(239, 221, 48, 0.35);
         }
         .answers {
             display: grid;
@@ -59,9 +62,10 @@
             background: #2a2aff;
             border: none;
             color: white;
-            text-align: left;
+            text-align: center;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
         }
         .status-box {
             padding: 12px 16px;
@@ -70,6 +74,7 @@
             color: #EFDD30;
             min-height: 24px;
             margin-bottom: 24px;
+            font-weight: bold;
         }
         .empty-state {
             padding: 24px;
@@ -83,6 +88,33 @@
             border-radius: 14px;
             background: rgba(255, 255, 255, 0.08);
             color: #ffd4d4;
+        }
+        .side-title {
+            color: #EFDD30;
+            text-align: center;
+        }
+        .pin {
+            color: #EFDD30;
+            font-size: 40px;
+            font-weight: 900;
+            text-align: center;
+            margin: 0 0 22px;
+        }
+        .label {
+            color: #d9ddff;
+            margin: 0 0 12px;
+        }
+        .question-number {
+            color: #EFDD30;
+            font-size: 16px;
+            margin: 0 0 10px;
+            text-transform: uppercase;
+        }
+        .question-text {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 1.25;
         }
         @media (max-width: 800px) {
             .layout {
@@ -98,14 +130,14 @@
 
     <div class="layout">
         <aside class="panel">
-            <h2>Joined Session</h2>
-            <p>PIN: <strong>{{ session.pin }}</strong></p>
-            <p>Players:</p>
+            <h2 class="side-title">PIN</h2>
+            <p class="pin">{{ session.pin }}</p>
+            <p class="label">Players</p>
             <ul class="player-list" id="players-list">
                 {% for player in players %}
                 <li>{{ player.name }}</li>
                 {% empty %}
-                <li>No players joined yet.</li>
+                <li>No players</li>
                 {% endfor %}
             </ul>
         </aside>
@@ -116,8 +148,8 @@
 
             {% for question in questions %}
             <section class="question-card" data-question-id="{{ question.id }}">
-                <h3>Question {{ forloop.counter }}</h3>
-                <p>{{ question.text }}</p>
+                <h3 class="question-number">Question {{ forloop.counter }}</h3>
+                <p class="question-text">{{ question.text }}</p>
                 <div class="answers">
                     {% for answer in question.answer_set.all %}
                     <button
@@ -132,7 +164,7 @@
                 </div>
             </section>
             {% empty %}
-            <p>This quiz has no questions yet.</p>
+            <p>No questions yet.</p>
             {% endfor %}
         </main>
     </div>
@@ -158,7 +190,7 @@
 
         function renderPlayers(players) {
             if (!players.length) {
-                playersList.innerHTML = "<li>No players joined yet.</li>";
+                playersList.innerHTML = "<li>No players</li>";
                 return;
             }
 
@@ -231,7 +263,7 @@
             if (!remainingQuestions.length) {
                 const doneMessage = document.createElement("div");
                 doneMessage.className = "empty-state";
-                doneMessage.textContent = "You answered all available questions.";
+                doneMessage.textContent = "Done.";
                 document.querySelector("main.panel").appendChild(doneMessage);
             }
         }
@@ -250,10 +282,10 @@
         }
 
         if (!playerName) {
-            answerStatus.textContent = "Player was not found for this session.";
-            replaceQuestionsWithMessage("Player was not found for this session.");
+            answerStatus.textContent = "Player not found.";
+            replaceQuestionsWithMessage("Player not found.");
         } else {
-            answerStatus.textContent = `Player: ${playerName}`;
+            answerStatus.textContent = playerName;
             localStorage.setItem("player_name", playerName);
             localStorage.setItem("session_pin", sessionPin);
         }
@@ -277,7 +309,7 @@
 
                 const questionCard = button.closest(".question-card");
                 const questionId = button.dataset.questionId;
-                answerStatus.textContent = "Saving answer...";
+                answerStatus.textContent = "Saving...";
 
                 try {
                     const response = await fetch(`/game/${sessionPin}/answer/`, {
@@ -307,7 +339,7 @@
                             saveAnsweredQuestion(questionId);
                             hideQuestion(questionCard);
                         }
-                        answerStatus.textContent = result.error || "Answer could not be saved.";
+                        answerStatus.textContent = result.error || "Not saved.";
                         return;
                     }
 
@@ -315,10 +347,10 @@
                     hideQuestion(questionCard);
 
                     answerStatus.textContent = result.correct
-                        ? `Correct answer. Score: ${result.score}`
-                        : `Wrong answer. Score: ${result.score}`;
+                        ? `Correct | ${result.score}`
+                        : `Wrong | ${result.score}`;
                 } catch (error) {
-                    answerStatus.textContent = `Answer failed: ${error.message}`;
+                    answerStatus.textContent = `Failed: ${error.message}`;
                 }
             });
         });

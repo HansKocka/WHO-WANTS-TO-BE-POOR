@@ -12,7 +12,7 @@
         }
         .layout {
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 260px 1fr;
             gap: 24px;
             min-height: 100vh;
             padding: 24px;
@@ -29,12 +29,15 @@
         }
         h1 {
             color: #EFDD30;
+            font-size: clamp(34px, 5vw, 58px);
+            margin-bottom: 18px;
         }
         .pin {
-            font-size: 28px;
+            font-size: 44px;
             font-weight: bold;
             color: #EFDD30;
-            margin-bottom: 16px;
+            margin-bottom: 22px;
+            text-align: center;
         }
         .player-list {
             list-style: none;
@@ -52,6 +55,7 @@
             padding: 20px;
             border-radius: 14px;
             background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(239, 221, 48, 0.35);
         }
         .answers {
             display: grid;
@@ -66,7 +70,7 @@
         }
         .meta {
             color: #d9ddff;
-            margin-bottom: 24px;
+            margin: 0 0 16px;
         }
         .toolbar {
             display: flex;
@@ -82,6 +86,8 @@
             background: rgba(255, 255, 255, 0.12);
             color: #EFDD30;
             min-height: 24px;
+            margin-bottom: 20px;
+            font-weight: bold;
         }
         @media (max-width: 800px) {
             .layout {
@@ -91,9 +97,10 @@
         .answer {
             border: none;
             color: white;
-            text-align: left;
+            text-align: center;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
         }
         .answer:disabled {
             opacity: 0.6;
@@ -102,11 +109,30 @@
         .end-link {
             display: inline-block;
             padding: 12px 18px;
-            border-radius: 12px;
+            border-radius: 8px;
             text-decoration: none;
             background: #EFDD30;
             color: #1900A8;
+            border: 3px solid #EFDD30;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #0D0067;
+        }
+        .side-title {
+            color: #EFDD30;
+            text-align: center;
+        }
+        .question-number {
+            color: #EFDD30;
+            font-size: 16px;
+            margin: 0 0 10px;
+            text-transform: uppercase;
+        }
+        .question-text {
+            margin: 0;
+            font-size: 24px;
             font-weight: bold;
+            line-height: 1.25;
         }
     </style>
 </head>
@@ -117,14 +143,14 @@
 
     <div class="layout">
         <aside class="panel">
-            <h2>Session</h2>
+            <h2 class="side-title">PIN</h2>
             <div class="pin">{{ session.pin }}</div>
-            <p class="meta">Players in this lobby:</p>
+            <p class="meta">Players</p>
             <ul class="player-list" id="players-list">
                 {% for player in players %}
                 <li>{{ player.name }}</li>
                 {% empty %}
-                <li>No players joined yet.</li>
+                <li>No players</li>
                 {% endfor %}
             </ul>
         </aside>
@@ -132,15 +158,14 @@
         <main class="panel">
             <h1>{{ quiz.title }}</h1>
             <div class="toolbar">
-                <p class="meta">This page opens for the host and every joined player when the host starts the game.</p>
                 <button class="end-link" id="end-btn" type="button">Konec</button>
             </div>
             <div class="status-box" id="answer-status"></div>
 
             {% for question in questions %}
             <section class="question-card" data-question-id="{{ question.id }}">
-                <h3>Question {{ forloop.counter }}</h3>
-                <p>{{ question.text }}</p>
+                <h3 class="question-number">Question {{ forloop.counter }}</h3>
+                <p class="question-text">{{ question.text }}</p>
                 <div class="answers">
                     {% for answer in question.answer_set.all %}
                     <button
@@ -155,7 +180,7 @@
                 </div>
             </section>
             {% empty %}
-            <p>This quiz has no questions yet.</p>
+            <p>No questions yet.</p>
             {% endfor %}
         </main>
     </div>
@@ -180,7 +205,7 @@
 
         function renderPlayers(players) {
             if (!players.length) {
-                playersList.innerHTML = "<li>No players joined yet.</li>";
+                playersList.innerHTML = "<li>No players</li>";
                 return;
             }
 
@@ -216,7 +241,7 @@
             }
         };
 
-        answerStatus.textContent = "Host mode: answers are disabled on this screen.";
+        answerStatus.textContent = "Host view";
         answerButtons.forEach((button) => {
             button.disabled = true;
         });
@@ -231,7 +256,7 @@
                 const questionCard = button.closest('[data-question-id]');
                 const questionButtons = questionCard.querySelectorAll('.answer');
 
-                answerStatus.textContent = 'Saving answer...';
+                answerStatus.textContent = 'Saving...';
 
                 try {
                     const response = await fetch(`/game/${sessionPin}/answer/`, {
@@ -257,7 +282,7 @@
                     }
 
                     if (!response.ok || !result.ok) {
-                        answerStatus.textContent = result.error || 'Answer could not be saved.';
+                        answerStatus.textContent = result.error || 'Not saved.';
                         return;
                     }
 
@@ -266,10 +291,10 @@
                     });
 
                     answerStatus.textContent = result.correct
-                        ? `Correct answer. Score: ${result.score}`
-                        : `Wrong answer. Score: ${result.score}`;
+                        ? `Correct | ${result.score}`
+                        : `Wrong | ${result.score}`;
                 } catch (error) {
-                    answerStatus.textContent = `Answer failed: ${error.message}`;
+                    answerStatus.textContent = `Failed: ${error.message}`;
                 }
             });
         });

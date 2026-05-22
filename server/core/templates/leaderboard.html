@@ -53,12 +53,10 @@
         .home-link {
             display: inline-block;
             margin-top: 24px;
-            padding: 12px 18px;
-            border-radius: 12px;
             text-decoration: none;
-            background: #EFDD30;
-            color: #1900A8;
-            font-weight: bold;
+            color: white;
+            font-size: 18px;
+            font-weight: 400;
         }
     </style>
 </head>
@@ -89,7 +87,7 @@
             {% endfor %}
         </div>
 
-        <a class="home-link" href="/">Home</a>
+        <a class="home-link" href="{% url 'home_page' %}">home</a>
     </div>
 </body>
 </html>

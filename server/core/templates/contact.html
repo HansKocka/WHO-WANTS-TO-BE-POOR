@@ -4,11 +4,6 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <style>
-        a{
-        font-size: 20px;
-        color: white;
-
-        }
         h1{
         text-align: center;
         color: #EFDD30;
@@ -16,13 +11,25 @@
         body{
         background-color: #1900A8;
         }
+        footer {
+        padding: 24px;
+        text-align: center;
+        }
+        footer a {
+        margin: 0 8px;
+        color: white;
+        text-decoration: none;
+        font-size: 18px;
+        font-weight: 400;
+        }
     </style>
 </head>
 <body>
-    <a href="{% url 'home_page' %}">home</a>
-    <a href="{% url 'about_page' %}">about</a>
     <h1>CONTACT</h1>
     <p style="color: white; text-align: center;">Email: your@email.com<br>
 GitHub: https://github.com/yourname</p>
+<footer>
+    <a href="{% url 'home_page' %}">home</a>
+</footer>
 </body>
 </html>

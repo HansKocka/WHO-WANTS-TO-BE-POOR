@@ -108,6 +108,16 @@
             background: var(--accent);
             color: var(--bg);
         }
+        footer {
+            padding: 24px;
+            text-align: center;
+        }
+        .home-button {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 400;
+        }
         @media (max-width: 720px) {
             h1 {
                 font-size: 32px;
@@ -240,5 +250,8 @@
         </div>
     </form>
 </div>
+<footer>
+    <a class="home-button" href="{% url 'home_page' %}">home</a>
+</footer>
 </body>
 </html>

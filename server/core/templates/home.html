@@ -2,50 +2,145 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HOME</title>
+    <title>Home</title>
     <style>
-        a{
-        font-size: 20px;
-        color: white;
+        * {
+            box-sizing: border-box;
+        }
 
+        html {
+            overflow-x: hidden;
         }
-        .top-right{
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        margin: 0;
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            background: #1900A8;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow-x: hidden;
         }
+
+        a {
+            color: inherit;
+        }
+
+        .top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            margin: 0;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
         .top-right a,
-        .top-right button{
-        background: #EFDD30;
-        color: #1900A8;
-        padding: 10px 16px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: bold;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
+        .top-right button,
+        .menu-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 54px;
+            padding: 12px 22px;
+            background: #EFDD30;
+            color: #1900A8;
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 0;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #0D0067;
+            transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
         }
-        .top-right form{
-        margin: 0;
-        }
-        h1{
-        text-align: center;
-        color: #EFDD30;
-        }
-        body{
-        background-color: #1900A8;
-        }
-        div{
-        color: #4D62F5;
-        margin: 40px;
-        position: relative;
-        }
-        footer{
-        position: relative;
-        top: 550px;
 
+        .top-right a:hover,
+        .top-right button:hover,
+        .menu-button:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #0D0067;
+        }
+
+        .top-right a:active,
+        .top-right button:active,
+        .menu-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #0D0067;
+        }
+
+        .top-right form {
+            margin: 0;
+        }
+
+        main {
+            width: min(720px, calc(100% - 32px));
+            margin: 96px auto 48px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0 0 42px;
+            color: #EFDD30;
+            font-size: clamp(38px, 8vw, 76px);
+            line-height: 0.95;
+            font-weight: 900;
+        }
+
+        .menu {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 22px;
+        }
+
+        .menu-button {
+            width: 100%;
+            min-height: 82px;
+            font-size: clamp(24px, 5vw, 40px);
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 24px;
+            text-align: center;
+        }
+
+        footer a {
+            margin: 0 10px;
+            color: white;
+            font-size: 18px;
+        }
+
+        footer p {
+            margin: 14px 0 0;
+            color: white;
+        }
+
+        @media (max-width: 560px) {
+            .top-right {
+                position: static;
+                justify-content: flex-end;
+                padding: 16px;
+            }
+
+            .top-right a,
+            .top-right button {
+                min-height: 48px;
+                padding: 10px 14px;
+                font-size: 18px;
+            }
+
+            main {
+                margin-top: 28px;
+            }
+
+            .menu {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -58,22 +153,24 @@
             </form>
         {% else %}
             <a href="{% url 'login' %}">LOGIN</a>
+            <a href="{% url 'register' %}">REGISTER</a>
         {% endif %}
     </div>
-    <h1>WHO WANTS TO BE POOR</h1>
-    <div><a href="{% url 'create' %}">CREATE</a></div>
-    <div><a href="{% url 'quiz' %}">QUIZZES</a></div>
-    <div><a href="{% url 'my_quizzes' %}">MY QUIZZES</a></div>
-    <div><a href="{% url 'join' %}">JOIN</a></div>
-    {% if not user.is_authenticated %}
-        <div><a href="{% url 'register' %}">REGISTER</a></div>
-    {% endif %}
 
+    <main>
+        <h1>WHO WANTS TO BE POOR</h1>
+        <nav class="menu" aria-label="Main menu">
+            <a class="menu-button" href="{% url 'create' %}">CREATE</a>
+            <a class="menu-button" href="{% url 'quiz' %}">QUIZZES</a>
+            <a class="menu-button" href="{% url 'my_quizzes' %}">MY QUIZZES</a>
+            <a class="menu-button" href="{% url 'join' %}">JOIN</a>
+        </nav>
+    </main>
+
+    <footer>
+        <a href="{% url 'about_page' %}">about</a>
+        <a href="{% url 'contact_page' %}">contact</a>
+        <p>&copy; 2026 Who Wants To Be Poor</p>
+    </footer>
 </body>
-
-<footer>
-    <a href="{% url 'about_page' %}">about</a>
-    <a href="{% url 'contact_page' %}">contact</a>
-    <p style="color: white;">© 2026 Who Wants To Be Poor</p>
-</footer>
 </html>
