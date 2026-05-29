@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     home, about, contact, create, join, quiz, host, quiz_detail,
     session_players, game, submit_answer, leaderboard, joined, result, my_quizzes, login_page, register_page,
-    logout_page
+    logout_page, verify_email_page
 )
 
 urlpatterns = [
@@ -23,5 +23,6 @@ urlpatterns = [
     path("my-quizzes/", my_quizzes, name="my_quizzes"),
     path("login/", login_page, name="login"),
     path("register/", register_page, name="register"),
+    path("verify-email/", verify_email_page, name="verify_email"),
     path("logout/", logout_page, name="logout"),
 ]

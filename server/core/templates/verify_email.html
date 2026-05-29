@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>REGISTER</title>
+    <title>VERIFY EMAIL</title>
 
     <style>
         body{
@@ -28,6 +28,9 @@
             width:100%;
             margin:10px 0;
             padding:10px;
+            font-size:20px;
+            text-align:center;
+            letter-spacing:4px;
         }
 
         button{
@@ -36,10 +39,15 @@
             background:#EFDD30;
             border:none;
             font-weight:bold;
+            color:#1900A8;
         }
 
         p{
             text-align:center;
+            color:white;
+        }
+
+        .error{
             color:red;
         }
 
@@ -52,36 +60,27 @@
             padding: 24px;
             text-align: center;
         }
-
-        .home-button{
-            color: white;
-            text-decoration: none;
-            font-size: 18px;
-            font-weight: 400;
-        }
     </style>
 </head>
 
 <body>
 
-<h1>REGISTER</h1>
+<h1>VERIFY EMAIL</h1>
+
+<p>{{ message }}</p>
 
 {% if error %}
-<p>{{ error }}</p>
+<p class="error">{{ error }}</p>
 {% endif %}
 
 <form method="post">
     {% csrf_token %}
-    <input name="username" placeholder="username" required>
-    <input name="email" type="email" placeholder="email" required>
-    <input name="password" type="password" placeholder="password" required>
-    <button>REGISTER</button>
+    <input name="code" placeholder="CODE" maxlength="6" required>
+    <button>VERIFY</button>
 </form>
 
-<p><a href="{% url 'login' %}">Already have account? Login</a></p>
-
 <footer>
-    <a class="home-button" href="{% url 'home_page' %}">home</a>
+    <a href="{% url 'home_page' %}">home</a>
 </footer>
 
 </body>

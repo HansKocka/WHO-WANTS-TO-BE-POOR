@@ -1,19 +1,43 @@
 from django.contrib.auth.models import User
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Quiz
+from .models import EmailVerification, Quiz
 
 
 class AuthQuizTests(TestCase):
-    def test_register_logs_user_in(self):
+    def test_register_sends_verification_email(self):
         response = self.client.post(reverse("register"), {
             "username": "alice",
+            "email": "alice@example.com",
             "password": "strong-pass-123",
         })
 
+        self.assertRedirects(response, reverse("verify_email"))
+        user = User.objects.get(username="alice")
+        self.assertFalse(user.is_active)
+        self.assertEqual(user.email, "alice@example.com")
+        self.assertTrue(EmailVerification.objects.filter(user=user).exists())
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_verify_email_activates_and_logs_user_in(self):
+        self.client.post(reverse("register"), {
+            "username": "alice",
+            "email": "alice@example.com",
+            "password": "strong-pass-123",
+        })
+        user = User.objects.get(username="alice")
+        code = user.email_verification.code
+
+        response = self.client.post(reverse("verify_email"), {
+            "code": code,
+        })
+
         self.assertRedirects(response, reverse("my_quizzes"))
-        self.assertEqual(self.client.session["_auth_user_id"], str(User.objects.get(username="alice").id))
+        user.refresh_from_db()
+        self.assertTrue(user.is_active)
+        self.assertEqual(self.client.session["_auth_user_id"], str(user.id))
 
     def test_login_logs_user_in(self):
         user = User.objects.create_user(username="alice", password="strong-pass-123")
