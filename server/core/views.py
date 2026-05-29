@@ -236,17 +236,67 @@ def join(request):
 
 
 def quiz(request):
-    quizzes = Quiz.objects.all()
+    quizzes = Quiz.objects.select_related("owner").all()
     return render(request, "quiz.html", {"quizzes": quizzes})
 
 
 def quiz_detail(request, quiz_id):
-    quiz_obj = Quiz.objects.get(id=quiz_id)
-    questions = Question.objects.filter(quiz=quiz_obj)
+    quiz_obj = get_object_or_404(Quiz.objects.select_related("owner"), id=quiz_id)
+    questions = Question.objects.filter(quiz=quiz_obj).prefetch_related("answer_set")
     return render(request, "quiz_detail.html", {
         "quiz": quiz_obj,
         "questions": questions
     })
+
+
+@login_required
+def edit_quiz(request, quiz_id):
+    quiz_obj = get_object_or_404(Quiz, id=quiz_id, owner=request.user)
+    questions = Question.objects.filter(quiz=quiz_obj).prefetch_related("answer_set")
+
+    if request.method == "POST":
+        title = (request.POST.get("title") or "").strip()
+        if not title:
+            return render(request, "edit_quiz.html", {
+                "quiz": quiz_obj,
+                "questions": questions,
+                "error": "Quiz title is required.",
+            })
+
+        quiz_obj.title = title
+        quiz_obj.save(update_fields=["title"])
+
+        for question in questions:
+            question_text = (request.POST.get(f"question_{question.id}") or "").strip()
+            if question_text:
+                question.text = question_text
+                question.save(update_fields=["text"])
+
+            correct_answer_id = request.POST.get(f"correct_{question.id}")
+
+            for answer in question.answer_set.all():
+                answer_text = (request.POST.get(f"answer_{answer.id}") or "").strip()
+                answer.text = answer_text
+                answer.is_correct = str(answer.id) == str(correct_answer_id)
+                answer.save(update_fields=["text", "is_correct"])
+
+        return redirect("quiz_detail", quiz_id=quiz_obj.id)
+
+    return render(request, "edit_quiz.html", {
+        "quiz": quiz_obj,
+        "questions": questions,
+    })
+
+
+@login_required
+def delete_quiz(request, quiz_id):
+    quiz_obj = get_object_or_404(Quiz, id=quiz_id, owner=request.user)
+
+    if request.method == "POST":
+        quiz_obj.delete()
+        return redirect("my_quizzes")
+
+    return redirect("quiz_detail", quiz_id=quiz_obj.id)
 
 
 def host(request, quiz_id):

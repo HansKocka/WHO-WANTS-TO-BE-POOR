@@ -57,6 +57,35 @@
             transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
         }
 
+        .owner-actions {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin: -12px 0 34px;
+        }
+
+        .owner-actions form {
+            margin: 0;
+        }
+
+        .small-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+            padding: 9px 18px;
+            background: #EFDD30;
+            color: #1900A8;
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #0D0067;
+        }
+
         .host-button:hover {
             background: white;
             transform: translateY(-2px);
@@ -146,6 +175,16 @@
         <form action="{% url 'host' quiz.id %}" method="get">
             <button class="host-button" type="submit">HOST QUIZ</button>
         </form>
+
+        {% if user.is_authenticated and quiz.owner_id == user.id %}
+            <div class="owner-actions">
+                <a class="small-button" href="{% url 'edit_quiz' quiz.id %}">EDIT</a>
+                <form action="{% url 'delete_quiz' quiz.id %}" method="post">
+                    {% csrf_token %}
+                    <button class="small-button" type="submit" onclick="return confirm('Delete this quiz?')">DELETE</button>
+                </form>
+            </div>
+        {% endif %}
 
         <section class="question-list" aria-label="Quiz questions">
             {% for question in questions %}

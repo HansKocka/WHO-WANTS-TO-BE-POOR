@@ -42,8 +42,14 @@
             gap: 18px;
         }
 
+        .quiz-item {
+            display: grid;
+            gap: 12px;
+        }
+
         .quiz-button {
-            display: inline-flex;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100%;
@@ -60,6 +66,46 @@
             overflow-wrap: anywhere;
             box-shadow: 0 8px 0 #0D0067;
             transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+        }
+
+        .quiz-title {
+            display: block;
+        }
+
+        .quiz-author {
+            display: block;
+            margin-top: 6px;
+            color: #1900A8;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .manage-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .manage-actions form {
+            margin: 0;
+        }
+
+        .small-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 8px 16px;
+            background: #EFDD30;
+            color: #1900A8;
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #0D0067;
         }
 
         .quiz-button:hover {
@@ -107,9 +153,21 @@
 
         <div class="quiz-list">
             {% for quiz in quizzes %}
-                <a class="quiz-button" href="{% url 'quiz_detail' quiz.id %}">
-                    {{ quiz.title }}
-                </a>
+                <div class="quiz-item">
+                    <a class="quiz-button" href="{% url 'quiz_detail' quiz.id %}">
+                        <span class="quiz-title">{{ quiz.title }}</span>
+                        <span class="quiz-author">by {{ quiz.owner.username }}</span>
+                    </a>
+                    {% if user.is_authenticated and quiz.owner_id == user.id %}
+                        <div class="manage-actions">
+                            <a class="small-button" href="{% url 'edit_quiz' quiz.id %}">EDIT</a>
+                            <form action="{% url 'delete_quiz' quiz.id %}" method="post">
+                                {% csrf_token %}
+                                <button class="small-button" type="submit" onclick="return confirm('Delete this quiz?')">DELETE</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
             {% empty %}
                 <div class="empty-state">No quizzes available</div>
             {% endfor %}

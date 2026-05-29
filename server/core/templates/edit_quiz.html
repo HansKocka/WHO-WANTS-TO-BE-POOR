@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit {{ quiz.title }}</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 32px 16px 48px;
+            background: #1900A8;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .page {
+            width: min(900px, 100%);
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 28px;
+            color: #EFDD30;
+            text-align: center;
+            font-size: clamp(42px, 8vw, 76px);
+            line-height: 0.95;
+            font-weight: 900;
+        }
+
+        form {
+            display: grid;
+            gap: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #EFDD30;
+            font-weight: 900;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 2px solid #EFDD30;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+
+        .question-card {
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            padding: 18px;
+            background: #2200C8;
+            box-shadow: 0 8px 0 #0D0067;
+        }
+
+        .answers {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .answer-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .answer-row input[type="radio"] {
+            width: 22px;
+            height: 22px;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        button,
+        .link-button {
+            min-height: 58px;
+            padding: 12px 22px;
+            background: #EFDD30;
+            color: #1900A8;
+            border: 3px solid #EFDD30;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 22px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #0D0067;
+        }
+
+        .error {
+            color: #ffb6b6;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        footer {
+            padding: 24px;
+            text-align: center;
+        }
+
+        footer a {
+            color: white;
+            font-size: 18px;
+        }
+
+        @media (max-width: 620px) {
+            .answer-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <h1>EDIT QUIZ</h1>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="question-card">
+                <label for="title">Quiz title</label>
+                <input id="title" name="title" value="{{ quiz.title }}" required>
+            </div>
+
+            {% for question in questions %}
+                <section class="question-card">
+                    <label for="question_{{ question.id }}">Question {{ forloop.counter }}</label>
+                    <input id="question_{{ question.id }}" name="question_{{ question.id }}" value="{{ question.text }}" required>
+
+                    <div class="answers">
+                        {% for answer in question.answer_set.all %}
+                            <div class="answer-row">
+                                <input name="answer_{{ answer.id }}" value="{{ answer.text }}" required>
+                                <label>
+                                    <input type="radio" name="correct_{{ question.id }}" value="{{ answer.id }}" {% if answer.is_correct %}checked{% endif %}>
+                                    correct
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% empty %}
+                <div class="question-card">This quiz has no questions yet.</div>
+            {% endfor %}
+
+            <div class="button-row">
+                <button type="submit">SAVE</button>
+                <a class="link-button" href="{% url 'quiz_detail' quiz.id %}">CANCEL</a>
+            </div>
+        </form>
+    </main>
+
+    <footer>
+        <a href="{% url 'home_page' %}">home</a>
+    </footer>
+</body>
+</html>

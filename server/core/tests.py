@@ -3,7 +3,7 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import EmailVerification, Quiz
+from .models import Answer, EmailVerification, Question, Quiz
 
 
 class AuthQuizTests(TestCase):
@@ -77,3 +77,49 @@ class AuthQuizTests(TestCase):
         })
 
         self.assertTrue(Quiz.objects.filter(owner=alice, title="Alice quiz").exists())
+
+    def test_owner_can_edit_quiz(self):
+        alice = User.objects.create_user(username="alice", password="strong-pass-123")
+        quiz = Quiz.objects.create(owner=alice, title="Old title")
+        question = Question.objects.create(quiz=quiz, text="Old question?")
+        answer = Answer.objects.create(question=question, text="Old answer", is_correct=True)
+
+        self.client.force_login(alice)
+        response = self.client.post(reverse("edit_quiz", args=[quiz.id]), {
+            "title": "New title",
+            f"question_{question.id}": "New question?",
+            f"answer_{answer.id}": "New answer",
+            f"correct_{question.id}": str(answer.id),
+        })
+
+        self.assertRedirects(response, reverse("quiz_detail", args=[quiz.id]))
+        quiz.refresh_from_db()
+        question.refresh_from_db()
+        answer.refresh_from_db()
+        self.assertEqual(quiz.title, "New title")
+        self.assertEqual(question.text, "New question?")
+        self.assertEqual(answer.text, "New answer")
+
+    def test_non_owner_cannot_edit_quiz(self):
+        alice = User.objects.create_user(username="alice", password="strong-pass-123")
+        bob = User.objects.create_user(username="bob", password="strong-pass-123")
+        quiz = Quiz.objects.create(owner=alice, title="Alice quiz")
+
+        self.client.force_login(bob)
+        response = self.client.post(reverse("edit_quiz", args=[quiz.id]), {
+            "title": "Bob title",
+        })
+
+        self.assertEqual(response.status_code, 404)
+        quiz.refresh_from_db()
+        self.assertEqual(quiz.title, "Alice quiz")
+
+    def test_owner_can_delete_quiz(self):
+        alice = User.objects.create_user(username="alice", password="strong-pass-123")
+        quiz = Quiz.objects.create(owner=alice, title="Alice quiz")
+
+        self.client.force_login(alice)
+        response = self.client.post(reverse("delete_quiz", args=[quiz.id]))
+
+        self.assertRedirects(response, reverse("my_quizzes"))
+        self.assertFalse(Quiz.objects.filter(id=quiz.id).exists())

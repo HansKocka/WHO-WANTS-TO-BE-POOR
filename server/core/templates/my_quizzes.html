@@ -48,7 +48,8 @@
         }
 
         .quiz-button,
-        .create-button {
+        .create-button,
+        .small-button {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -75,15 +76,41 @@
             font-size: 22px;
         }
 
+        .quiz-item {
+            display: grid;
+            gap: 12px;
+        }
+
+        .manage-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .manage-actions form {
+            margin: 0;
+        }
+
+        .small-button {
+            width: auto;
+            min-height: 44px;
+            padding: 8px 16px;
+            font-size: 18px;
+            box-shadow: 0 5px 0 #0D0067;
+        }
+
         .quiz-button:hover,
-        .create-button:hover {
+        .create-button:hover,
+        .small-button:hover {
             background: white;
             transform: translateY(-2px);
             box-shadow: 0 10px 0 #0D0067;
         }
 
         .quiz-button:active,
-        .create-button:active {
+        .create-button:active,
+        .small-button:active {
             transform: translateY(4px);
             box-shadow: 0 4px 0 #0D0067;
         }
@@ -127,9 +154,18 @@
 
         <div class="quiz-list">
             {% for quiz in quizzes %}
-                <a class="quiz-button" href="{% url 'quiz_detail' quiz.id %}">
-                    {{ quiz.title }}
-                </a>
+                <div class="quiz-item">
+                    <a class="quiz-button" href="{% url 'quiz_detail' quiz.id %}">
+                        {{ quiz.title }}
+                    </a>
+                    <div class="manage-actions">
+                        <a class="small-button" href="{% url 'edit_quiz' quiz.id %}">EDIT</a>
+                        <form action="{% url 'delete_quiz' quiz.id %}" method="post">
+                            {% csrf_token %}
+                            <button class="small-button" type="submit" onclick="return confirm('Delete this quiz?')">DELETE</button>
+                        </form>
+                    </div>
+                </div>
             {% empty %}
                 <div class="empty-state">You have no quizzes yet.</div>
             {% endfor %}
