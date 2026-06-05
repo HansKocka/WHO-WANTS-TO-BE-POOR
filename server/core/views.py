@@ -1,5 +1,7 @@
 import json
 import random
+import resend
+import os
 from django.db import OperationalError, ProgrammingError
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -29,13 +31,12 @@ def send_verification_email(user):
         },
     )
 
-    send_mail(
-        "Your Who Wants To Be Poor verification code",
-        f"Your verification code is: {code}\n\nThis code expires in 15 minutes.",
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    resend.Emails.send({
+        "from": os.environ.get("DEFAULT_FROM_EMAIL"),
+        "to": [user.email],
+        "subject": "Your Who Wants To Be Poor verification code",
+        "text": f"Your verification code is: {code}\n\nThis code expires in 15 minutes.",
+    })
 
 
 def send_password_reset_email(user):
@@ -48,13 +49,12 @@ def send_password_reset_email(user):
         },
     )
 
-    send_mail(
-        "Your Who Wants To Be Poor password reset code",
-        f"Your password reset code is: {code}\n\nThis code expires in 15 minutes.",
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    resend.Emails.send({
+        "from": os.environ.get("DEFAULT_FROM_EMAIL"),
+        "to": [user.email],
+        "subject": "Your Who Wants To Be Poor password reset code",
+        "text": f"Your password reset code is: {code}\n\nThis code expires in 15 minutes.",
+    })
 
 
 def home(request):
