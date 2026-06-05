@@ -117,18 +117,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-
-EMAIL_HOST = "smtp.office365.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
-EMAIL_HOST_USER = "who-wants-to-be-poor@outlook.com"
-EMAIL_HOST_PASSWORD = "MaxVerstappen#1"
-
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 # Default primary key field type
