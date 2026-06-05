@@ -13,6 +13,16 @@ class EmailVerification(models.Model):
         return timezone.now() > self.expires_at
 
 
+class PasswordResetCode(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="password_reset_code")
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+
 class Quiz(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
@@ -55,6 +65,18 @@ class Player(models.Model):
     name = models.CharField(max_length=100)
     score = models.IntegerField(default=0)
     session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name='players')
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def answer_time_display(self):
+        if not self.started_at or not self.finished_at:
+            return "-"
+
+        total_seconds = max(0, int((self.finished_at - self.started_at).total_seconds()))
+        minutes = total_seconds // 60
+        seconds = total_seconds % 60
+        return f"{minutes}:{seconds:02d}"
 
     class Meta:
         unique_together = ('name', 'session')

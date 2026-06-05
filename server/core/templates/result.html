@@ -36,6 +36,12 @@
             color: #EFDD30;
             margin: 18px 0;
         }
+        .time {
+            font-size: 28px;
+            font-weight: bold;
+            color: #EFDD30;
+            margin: 18px 0;
+        }
         .label {
             color: #d9ddff;
         }
@@ -67,6 +73,8 @@
             <p class="label">Player: {{ player.name }}</p>
             <div class="score">{{ player.score }}</div>
             <p class="label">Total points</p>
+            <div class="time">{{ player.answer_time_display }}</div>
+            <p class="label">Answer time</p>
             {% else %}
             <p class="label">Player "{{ player_name }}" was not found in this session.</p>
             {% endif %}

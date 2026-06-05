@@ -33,7 +33,7 @@
         }
         .row {
             display: grid;
-            grid-template-columns: 80px 1fr 120px;
+            grid-template-columns: 80px 1fr 120px 120px;
             gap: 16px;
             align-items: center;
             padding: 14px 16px;
@@ -50,9 +50,15 @@
             text-align: right;
             font-weight: bold;
         }
+        .time {
+            text-align: right;
+            font-weight: bold;
+            color: #EFDD30;
+        }
         .home-link {
             display: inline-block;
             margin-top: 24px;
+            margin-right: 16px;
             text-decoration: none;
             color: white;
             font-size: 18px;
@@ -70,6 +76,7 @@
                 <div>#</div>
                 <div>Player</div>
                 <div class="score">Points</div>
+                <div class="time">Time</div>
             </div>
 
             {% for player in players %}
@@ -77,16 +84,19 @@
                 <div>{{ forloop.counter }}</div>
                 <div>{{ player.name }}</div>
                 <div class="score">{{ player.score }}</div>
+                <div class="time">{{ player.answer_time_display }}</div>
             </div>
             {% empty %}
             <div class="row">
                 <div>-</div>
                 <div>No players</div>
                 <div class="score">0</div>
+                <div class="time">-</div>
             </div>
             {% endfor %}
         </div>
 
+        <a class="home-link" href="{% url 'quiz_review' session.pin %}">question review</a>
         <a class="home-link" href="{% url 'home_page' %}">home</a>
     </div>
 </body>

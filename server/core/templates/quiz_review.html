@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ quiz.title }} | Review</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #1900A8;
+            color: white;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 24px;
+            min-height: 100vh;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .panel {
+            background: rgba(77, 98, 245, 0.35);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+
+        h1 {
+            color: #EFDD30;
+            font-size: clamp(34px, 5vw, 58px);
+            margin-bottom: 18px;
+        }
+
+        .side-title {
+            color: #EFDD30;
+            text-align: center;
+        }
+
+        .pin {
+            color: #EFDD30;
+            font-size: 40px;
+            font-weight: 900;
+            text-align: center;
+            margin: 0 0 22px;
+        }
+
+        .label {
+            color: #d9ddff;
+            margin: 0 0 12px;
+        }
+
+        .summary-number {
+            color: #EFDD30;
+            font-size: 32px;
+            font-weight: 900;
+            margin: 0 0 24px;
+            text-align: center;
+        }
+
+        .question-card {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(239, 221, 48, 0.35);
+        }
+
+        .question-number {
+            color: #EFDD30;
+            font-size: 16px;
+            margin: 0 0 10px;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            margin: 0 0 16px;
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 1.25;
+        }
+
+        .mistakes {
+            display: inline-block;
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #EFDD30;
+            font-weight: 900;
+        }
+
+        .answers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .answer {
+            padding: 14px;
+            border-radius: 12px;
+            background: #2a2aff;
+            border: 2px solid transparent;
+            color: white;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .answer.correct {
+            background: #EFDD30;
+            border-color: #EFDD30;
+            color: #1900A8;
+        }
+
+        .answer-count {
+            display: block;
+            margin-top: 8px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .empty-state {
+            padding: 24px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #d9ddff;
+            text-align: center;
+        }
+
+        .footer-links {
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .footer-links a {
+            margin: 0 8px;
+            color: white;
+            font-size: 18px;
+        }
+
+        @media (max-width: 800px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="panel">
+            <h2 class="side-title">PIN</h2>
+            <p class="pin">{{ session.pin }}</p>
+            <p class="label">Players</p>
+            <p class="summary-number">{{ total_players }}</p>
+            <p class="label">Review</p>
+        </aside>
+
+        <main class="panel">
+            <h1>{{ quiz.title }}</h1>
+
+            {% for item in review_questions %}
+                <section class="question-card">
+                    <h3 class="question-number">Question {{ forloop.counter }}</h3>
+                    <p class="question-text">{{ item.question.text }}</p>
+                    <div class="mistakes">{{ item.wrong_count }} wrong</div>
+
+                    <div class="answers">
+                        {% for answer_item in item.answers %}
+                            <div class="answer {% if answer_item.answer.is_correct %}correct{% endif %}">
+                                {{ answer_item.answer.text }}
+                                <span class="answer-count">{{ answer_item.chosen_count }} chose this</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% empty %}
+                <p class="empty-state">No questions yet.</p>
+            {% endfor %}
+
+            <div class="footer-links">
+                <a href="{% url 'leaderboard' session.pin %}">leaderboard</a>
+                <a href="{% url 'home_page' %}">home</a>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

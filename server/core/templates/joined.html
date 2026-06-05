@@ -76,6 +76,26 @@
             margin-bottom: 24px;
             font-weight: bold;
         }
+        .play-info {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .play-info .status-box {
+            margin-bottom: 0;
+        }
+        .timer-box {
+            min-width: 96px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: #EFDD30;
+            color: #1900A8;
+            font-size: 22px;
+            font-weight: 900;
+            text-align: center;
+        }
         .empty-state {
             padding: 24px;
             border-radius: 14px;
@@ -144,7 +164,10 @@
 
         <main class="panel">
             <h1>{{ quiz.title }}</h1>
-            <div class="status-box" id="answer-status"></div>
+            <div class="play-info">
+                <div class="status-box" id="answer-status"></div>
+                <div class="timer-box" id="play-timer">0:00</div>
+            </div>
 
             {% for question in questions %}
             <section class="question-card" data-question-id="{{ question.id }}">
@@ -177,9 +200,36 @@
         const answerStatus = document.getElementById("answer-status");
         const playersList = document.getElementById("players-list");
         const answerButtons = document.querySelectorAll(".answer");
+        const playTimer = document.getElementById("play-timer");
         const csrfInput = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]');
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
         const ws = new WebSocket(`${protocol}://${window.location.host}/ws/quiz/${sessionPin}/`);
+        const timerStartedAt = Date.now();
+        let timerInterval = null;
+
+        function formatElapsed(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}:${String(seconds).padStart(2, "0")}`;
+        }
+
+        function startTimer() {
+            if (timerInterval) {
+                return;
+            }
+
+            timerInterval = window.setInterval(() => {
+                const elapsed = Math.floor((Date.now() - timerStartedAt) / 1000);
+                playTimer.textContent = formatElapsed(elapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                window.clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
 
         function getCookie(name) {
             const cookieValue = document.cookie
@@ -265,6 +315,7 @@
                 doneMessage.className = "empty-state";
                 doneMessage.textContent = "Done.";
                 document.querySelector("main.panel").appendChild(doneMessage);
+                stopTimer();
             }
         }
 
@@ -284,10 +335,12 @@
         if (!playerName) {
             answerStatus.textContent = "Player not found.";
             replaceQuestionsWithMessage("Player not found.");
+            stopTimer();
         } else {
             answerStatus.textContent = playerName;
             localStorage.setItem("player_name", playerName);
             localStorage.setItem("session_pin", sessionPin);
+            startTimer();
         }
 
         ws.onmessage = function(e) {

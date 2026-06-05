@@ -3,7 +3,7 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Answer, EmailVerification, Question, Quiz
+from .models import Answer, EmailVerification, GameSession, PasswordResetCode, Player, PlayerAnswer, Question, Quiz
 
 
 class AuthQuizTests(TestCase):
@@ -49,6 +49,32 @@ class AuthQuizTests(TestCase):
 
         self.assertRedirects(response, reverse("my_quizzes"))
         self.assertEqual(self.client.session["_auth_user_id"], str(user.id))
+
+    def test_password_reset_sends_code_and_changes_password(self):
+        user = User.objects.create_user(
+            username="alice",
+            email="alice@example.com",
+            password="old-pass-123",
+        )
+
+        response = self.client.post(reverse("forgot_password"), {
+            "email": "alice@example.com",
+        })
+
+        self.assertRedirects(response, reverse("reset_password"))
+        reset_code = PasswordResetCode.objects.get(user=user)
+        self.assertEqual(len(mail.outbox), 1)
+
+        response = self.client.post(reverse("reset_password"), {
+            "code": reset_code.code,
+            "password": "new-pass-123",
+            "password_confirm": "new-pass-123",
+        })
+
+        self.assertRedirects(response, reverse("login"))
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("new-pass-123"))
+        self.assertFalse(PasswordResetCode.objects.filter(user=user).exists())
 
     def test_my_quizzes_shows_only_logged_in_users_quizzes(self):
         alice = User.objects.create_user(username="alice", password="strong-pass-123")
@@ -123,3 +149,45 @@ class AuthQuizTests(TestCase):
 
         self.assertRedirects(response, reverse("my_quizzes"))
         self.assertFalse(Quiz.objects.filter(id=quiz.id).exists())
+
+    def test_player_finish_time_is_saved_after_all_questions(self):
+        owner = User.objects.create_user(username="owner", password="strong-pass-123")
+        quiz = Quiz.objects.create(owner=owner, title="Timed quiz")
+        question = Question.objects.create(quiz=quiz, text="Question?")
+        answer = Answer.objects.create(question=question, text="A", is_correct=True)
+        session = GameSession.objects.create(quiz=quiz, pin="123456")
+        player = Player.objects.create(session=session, name="Player")
+
+        response = self.client.post(
+            reverse("submit_answer", args=[session.pin]),
+            data={
+                "player_name": player.name,
+                "question_id": question.id,
+                "answer_id": answer.id,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        player.refresh_from_db()
+        self.assertIsNotNone(player.started_at)
+        self.assertIsNotNone(player.finished_at)
+        self.assertEqual(player.answer_time_display, "0:00")
+
+    def test_quiz_review_shows_answer_counts(self):
+        owner = User.objects.create_user(username="owner", password="strong-pass-123")
+        quiz = Quiz.objects.create(owner=owner, title="Review quiz")
+        question = Question.objects.create(quiz=quiz, text="Question?")
+        correct = Answer.objects.create(question=question, text="Correct", is_correct=True)
+        wrong = Answer.objects.create(question=question, text="Wrong", is_correct=False)
+        session = GameSession.objects.create(quiz=quiz, pin="654321")
+        player = Player.objects.create(session=session, name="Player")
+        PlayerAnswer.objects.create(player=player, question=question, selected_answer=wrong)
+
+        response = self.client.get(reverse("quiz_review", args=[session.pin]))
+
+        self.assertContains(response, "Review quiz")
+        self.assertContains(response, "1 wrong")
+        self.assertContains(response, "Correct")
+        self.assertContains(response, "Wrong")
+        self.assertContains(response, "1 chose this")

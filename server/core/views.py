@@ -9,7 +9,7 @@ from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import Quiz, Answer, Question, GameSession, Player, PlayerAnswer, EmailVerification
+from .models import Quiz, Answer, Question, GameSession, Player, PlayerAnswer, EmailVerification, PasswordResetCode
 from .utils import generate_pin
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -32,6 +32,25 @@ def send_verification_email(user):
     send_mail(
         "Your Who Wants To Be Poor verification code",
         f"Your verification code is: {code}\n\nThis code expires in 15 minutes.",
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
+
+
+def send_password_reset_email(user):
+    code = create_email_code()
+    PasswordResetCode.objects.update_or_create(
+        user=user,
+        defaults={
+            "code": code,
+            "expires_at": timezone.now() + timezone.timedelta(minutes=15),
+        },
+    )
+
+    send_mail(
+        "Your Who Wants To Be Poor password reset code",
+        f"Your password reset code is: {code}\n\nThis code expires in 15 minutes.",
         settings.DEFAULT_FROM_EMAIL,
         [user.email],
         fail_silently=False,
@@ -82,6 +101,79 @@ def login_page(request):
                 error = "Wrong login"
 
     return render(request, "login.html", {"error": error})
+
+
+@never_cache
+def forgot_password_page(request):
+    if request.user.is_authenticated:
+        return redirect("my_quizzes")
+
+    error = None
+    message = None
+
+    if request.method == "POST":
+        email = (request.POST.get("email") or "").strip().lower()
+
+        if not email:
+            error = "Fill in your email"
+        else:
+            user = User.objects.filter(email=email).first()
+
+            if user:
+                send_password_reset_email(user)
+                request.session["pending_password_reset_user_id"] = user.id
+                return redirect("reset_password")
+
+            message = "If this email exists, we sent a reset code."
+
+    return render(request, "forgot_password.html", {
+        "error": error,
+        "message": message,
+    })
+
+
+@never_cache
+def reset_password_page(request):
+    if request.user.is_authenticated:
+        return redirect("my_quizzes")
+
+    user_id = request.session.get("pending_password_reset_user_id")
+    user = User.objects.filter(id=user_id).first()
+
+    if not user:
+        return redirect("forgot_password")
+
+    error = None
+    message = f"We sent a reset code to {user.email}."
+
+    if request.method == "POST":
+        code = (request.POST.get("code") or "").strip()
+        password = request.POST.get("password") or ""
+        password_confirm = request.POST.get("password_confirm") or ""
+        reset_code = PasswordResetCode.objects.filter(user=user).first()
+
+        if not code or not password or not password_confirm:
+            error = "Fill in code and new password"
+        elif password != password_confirm:
+            error = "Passwords do not match"
+        elif not reset_code:
+            error = "Reset code was not found."
+        elif reset_code.is_expired():
+            send_password_reset_email(user)
+            error = "Code expired. We sent you a new one."
+        elif reset_code.code != code:
+            error = "Wrong reset code."
+        else:
+            user.set_password(password)
+            user.save(update_fields=["password"])
+            reset_code.delete()
+            request.session.pop("pending_password_reset_user_id", None)
+            return redirect("login")
+
+    return render(request, "reset_password.html", {
+        "error": error,
+        "message": message,
+    })
 
 
 @never_cache
@@ -398,6 +490,23 @@ def submit_answer(request, session_pin):
             player.score += 1
             player.save(update_fields=["score"])
 
+        if player.started_at is None:
+            player.started_at = timezone.now()
+
+        total_questions = Question.objects.filter(quiz=session.quiz).count()
+        answered_questions = PlayerAnswer.objects.filter(player=player, question__quiz=session.quiz).count()
+        update_fields = []
+
+        if player.started_at is not None:
+            update_fields.append("started_at")
+
+        if total_questions and answered_questions >= total_questions and player.finished_at is None:
+            player.finished_at = timezone.now()
+            update_fields.append("finished_at")
+
+        if update_fields:
+            player.save(update_fields=update_fields)
+
         return JsonResponse({
             "ok": True,
             "correct": answer.is_correct,
@@ -425,6 +534,50 @@ def leaderboard(request, session_pin):
     })
 
 
+def quiz_review(request, session_pin):
+    session = get_object_or_404(
+        GameSession.objects.select_related("quiz"),
+        pin=session_pin
+    )
+    questions = Question.objects.filter(quiz=session.quiz).prefetch_related("answer_set")
+    total_players = session.players.count()
+    review_questions = []
+
+    for question in questions:
+        answers = []
+
+        for answer in question.answer_set.all():
+            chosen_count = PlayerAnswer.objects.filter(
+                player__session=session,
+                question=question,
+                selected_answer=answer,
+            ).count()
+
+            answers.append({
+                "answer": answer,
+                "chosen_count": chosen_count,
+            })
+
+        wrong_count = PlayerAnswer.objects.filter(
+            player__session=session,
+            question=question,
+            selected_answer__is_correct=False,
+        ).count()
+
+        review_questions.append({
+            "question": question,
+            "answers": answers,
+            "wrong_count": wrong_count,
+        })
+
+    return render(request, "quiz_review.html", {
+        "session": session,
+        "quiz": session.quiz,
+        "review_questions": review_questions,
+        "total_players": total_players,
+    })
+
+
 def joined(request, pin):
     session = get_object_or_404(
         GameSession.objects.select_related("quiz"),
@@ -432,6 +585,13 @@ def joined(request, pin):
     )
     questions = Question.objects.filter(quiz=session.quiz).prefetch_related("answer_set")
     player_name = (request.GET.get("player_name") or "").strip()
+    player = None
+
+    if player_name:
+        player = Player.objects.filter(session=session, name=player_name).first()
+        if player and player.started_at is None:
+            player.started_at = timezone.now()
+            player.save(update_fields=["started_at"])
 
     return render(request, "joined.html", {
         "session": session,
@@ -439,6 +599,7 @@ def joined(request, pin):
         "questions": questions,
         "players": session.players.order_by("id"),
         "player_name": player_name,
+        "player": player,
     })
 
 
