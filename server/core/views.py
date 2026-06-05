@@ -1,6 +1,5 @@
 import json
 import random
-import resend
 import os
 from django.db import OperationalError, ProgrammingError
 from django.http import JsonResponse
