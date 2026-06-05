@@ -149,6 +149,7 @@ ALLOWED_HOSTS = [
     "192.168.0.230",
     "localhost",
     "127.0.0.1",
+    "who-wants-to-be-poor.onrender.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
