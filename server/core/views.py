@@ -31,12 +31,13 @@ def send_verification_email(user):
         },
     )
 
-    resend.Emails.send({
-        "from": os.environ.get("DEFAULT_FROM_EMAIL"),
-        "to": [user.email],
-        "subject": "Your Who Wants To Be Poor verification code",
-        "text": f"Your verification code is: {code}\n\nThis code expires in 15 minutes.",
-    })
+    send_mail(
+        subject="Your Who Wants To Be Poor verification code",
+        message=f"Your verification code is: {code}\n\nThis code expires in 15 minutes.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
 
 
 def send_password_reset_email(user):
@@ -49,12 +50,13 @@ def send_password_reset_email(user):
         },
     )
 
-    resend.Emails.send({
-        "from": os.environ.get("DEFAULT_FROM_EMAIL"),
-        "to": [user.email],
-        "subject": "Your Who Wants To Be Poor password reset code",
-        "text": f"Your password reset code is: {code}\n\nThis code expires in 15 minutes.",
-    })
+    send_mail(
+        subject="Your Who Wants To Be Poor password reset code",
+        message=f"Your password reset code is: {code}\n\nThis code expires in 15 minutes.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
 
 
 def home(request):
