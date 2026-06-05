@@ -149,6 +149,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://192.168.0.230:8000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "https://who-wants-to-be-poor.onrender.com",
+    "who-wants-to-be-poor.onrender.com",
 ]
 
 CSRF_FAILURE_VIEW = "core.views.csrf_failure"
