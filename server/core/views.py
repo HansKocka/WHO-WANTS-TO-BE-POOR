@@ -210,7 +210,7 @@ def register_page(request):
     return render(request, "register.html", {"error": error})
 
 
-@never_cache
+"""@never_cache
 def verify_email_page(request):
     user_id = request.session.get("pending_verification_user_id")
     user = User.objects.filter(id=user_id).first()
@@ -245,7 +245,7 @@ def verify_email_page(request):
         "message": message,
         "email": user.email,
     })
-
+"""
 
 def logout_page(request):
     logout(request)
