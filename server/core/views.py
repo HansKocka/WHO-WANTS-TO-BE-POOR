@@ -203,9 +203,9 @@ def register_page(request):
             )
             user.is_active = False
             user.save(update_fields=["is_active"])
-            send_verification_email(user)
+            """send_verification_email(user)
             request.session["pending_verification_user_id"] = user.id
-            return redirect("verify_email")
+            return redirect("verify_email")"""
 
     return render(request, "register.html", {"error": error})
 
