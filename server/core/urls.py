@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     home, about, contact, create, join, quiz, host, quiz_detail,
     session_players, game, submit_answer, leaderboard, joined, result, my_quizzes, login_page, register_page,
-    logout_page, verify_email_page, edit_quiz, delete_quiz, forgot_password_page, reset_password_page, quiz_review
+    logout_page, edit_quiz, delete_quiz, quiz_review
 )
 
 urlpatterns = [
