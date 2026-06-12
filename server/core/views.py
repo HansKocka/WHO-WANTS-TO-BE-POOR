@@ -104,7 +104,7 @@ def login_page(request):
     return render(request, "login.html", {"error": error})
 
 
-"""@never_cache
+@never_cache
 def forgot_password_page(request):
     if request.user.is_authenticated:
         return redirect("my_quizzes")
@@ -175,7 +175,7 @@ def reset_password_page(request):
         "error": error,
         "message": message,
     })
-"""
+
 
 @never_cache
 def register_page(request):
@@ -201,19 +201,16 @@ def register_page(request):
                 email=email,
                 password=password
             )
-            """user.is_active = False
+            user.is_active = False
             user.save(update_fields=["is_active"])
             send_verification_email(user)
             request.session["pending_verification_user_id"] = user.id
-            return redirect("verify_email")"""
-
-            login(request, user)
-            return redirect("my_quizzes")
+            return redirect("verify_email")
 
     return render(request, "register.html", {"error": error})
 
 
-"""@never_cache
+@never_cache
 def verify_email_page(request):
     user_id = request.session.get("pending_verification_user_id")
     user = User.objects.filter(id=user_id).first()
@@ -248,7 +245,7 @@ def verify_email_page(request):
         "message": message,
         "email": user.email,
     })
-"""
+
 
 def logout_page(request):
     logout(request)

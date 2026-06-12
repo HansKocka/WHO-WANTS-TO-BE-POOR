@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     home, about, contact, create, join, quiz, host, quiz_detail,
     session_players, game, submit_answer, leaderboard, joined, result, my_quizzes, login_page, register_page,
-    logout_page, edit_quiz, delete_quiz, quiz_review
+    logout_page, verify_email_page, edit_quiz, delete_quiz, forgot_password_page, reset_password_page, quiz_review
 )
 
 urlpatterns = [
@@ -25,6 +25,9 @@ urlpatterns = [
     path('quiz/<int:quiz_id>/delete/', delete_quiz, name='delete_quiz'),
     path("my-quizzes/", my_quizzes, name="my_quizzes"),
     path("login/", login_page, name="login"),
+    path("forgot-password/", forgot_password_page, name="forgot_password"),
+    path("reset-password/", reset_password_page, name="reset_password"),
     path("register/", register_page, name="register"),
+    path("verify-email/", verify_email_page, name="verify_email"),
     path("logout/", logout_page, name="logout"),
 ]
