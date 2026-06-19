@@ -120,7 +120,7 @@ STATIC_URL = "/static/"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = "smtp.office365.com"
+EMAIL_HOST = "smtp.seznam.cz"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
