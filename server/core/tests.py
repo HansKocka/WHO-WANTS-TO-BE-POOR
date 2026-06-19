@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
@@ -7,7 +6,7 @@ from .models import Answer, EmailVerification, GameSession, PasswordResetCode, P
 
 
 class AuthQuizTests(TestCase):
-    def test_register_sends_verification_email(self):
+    def test_register_creates_visible_verification_code(self):
         response = self.client.post(reverse("register"), {
             "username": "alice",
             "email": "alice@example.com",
@@ -18,8 +17,11 @@ class AuthQuizTests(TestCase):
         user = User.objects.get(username="alice")
         self.assertFalse(user.is_active)
         self.assertEqual(user.email, "alice@example.com")
-        self.assertTrue(EmailVerification.objects.filter(user=user).exists())
-        self.assertEqual(len(mail.outbox), 1)
+        verification = EmailVerification.objects.get(user=user)
+
+        response = self.client.get(reverse("verify_email"))
+
+        self.assertContains(response, verification.code)
 
     def test_verify_email_activates_and_logs_user_in(self):
         self.client.post(reverse("register"), {
@@ -50,7 +52,7 @@ class AuthQuizTests(TestCase):
         self.assertRedirects(response, reverse("my_quizzes"))
         self.assertEqual(self.client.session["_auth_user_id"], str(user.id))
 
-    def test_password_reset_sends_code_and_changes_password(self):
+    def test_password_reset_shows_code_and_changes_password(self):
         user = User.objects.create_user(
             username="alice",
             email="alice@example.com",
@@ -63,7 +65,10 @@ class AuthQuizTests(TestCase):
 
         self.assertRedirects(response, reverse("reset_password"))
         reset_code = PasswordResetCode.objects.get(user=user)
-        self.assertEqual(len(mail.outbox), 1)
+
+        response = self.client.get(reverse("reset_password"))
+
+        self.assertContains(response, reset_code.code)
 
         response = self.client.post(reverse("reset_password"), {
             "code": reset_code.code,

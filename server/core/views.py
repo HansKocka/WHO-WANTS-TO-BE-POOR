@@ -30,13 +30,14 @@ def send_verification_email(user):
         },
     )
 
-    send_mail(
-        subject="Your Who Wants To Be Poor verification code",
-        message=f"Your verification code is: {code}\n\nThis code expires in 15 minutes.",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
-    )
+    # Email sending is temporarily disabled for Render.
+    # send_mail(
+    #     subject="Your Who Wants To Be Poor verification code",
+    #     message=f"Your verification code is: {code}\n\nThis code expires in 15 minutes.",
+    #     from_email=settings.DEFAULT_FROM_EMAIL,
+    #     recipient_list=[user.email],
+    #     fail_silently=False,
+    # )
 
 
 def send_password_reset_email(user):
@@ -49,13 +50,14 @@ def send_password_reset_email(user):
         },
     )
 
-    send_mail(
-        subject="Your Who Wants To Be Poor password reset code",
-        message=f"Your password reset code is: {code}\n\nThis code expires in 15 minutes.",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
-    )
+    # Email sending is temporarily disabled for Render.
+    # send_mail(
+    #     subject="Your Who Wants To Be Poor password reset code",
+    #     message=f"Your password reset code is: {code}\n\nThis code expires in 15 minutes.",
+    #     from_email=settings.DEFAULT_FROM_EMAIL,
+    #     recipient_list=[user.email],
+    #     fail_silently=False,
+    # )
 
 
 def home(request):
@@ -145,14 +147,13 @@ def reset_password_page(request):
         return redirect("forgot_password")
 
     error = None
-    message = f"We sent a reset code to {user.email}."
+    message = f"Enter the reset code for {user.email}."
+    reset_code = PasswordResetCode.objects.filter(user=user).first()
 
     if request.method == "POST":
         code = (request.POST.get("code") or "").strip()
         password = request.POST.get("password") or ""
         password_confirm = request.POST.get("password_confirm") or ""
-        reset_code = PasswordResetCode.objects.filter(user=user).first()
-
         if not code or not password or not password_confirm:
             error = "Fill in code and new password"
         elif password != password_confirm:
@@ -161,6 +162,7 @@ def reset_password_page(request):
             error = "Reset code was not found."
         elif reset_code.is_expired():
             send_password_reset_email(user)
+            reset_code = PasswordResetCode.objects.filter(user=user).first()
             error = "Code expired. We sent you a new one."
         elif reset_code.code != code:
             error = "Wrong reset code."
@@ -174,6 +176,7 @@ def reset_password_page(request):
     return render(request, "reset_password.html", {
         "error": error,
         "message": message,
+        "dev_code": reset_code.code if reset_code else None,
     })
 
 
@@ -219,16 +222,17 @@ def verify_email_page(request):
         return redirect("register")
 
     error = None
-    message = f"We sent a verification code to {user.email}."
+    message = f"Enter the verification code for {user.email}."
+    verification = EmailVerification.objects.filter(user=user).first()
 
     if request.method == "POST":
         code = (request.POST.get("code") or "").strip()
-        verification = EmailVerification.objects.filter(user=user).first()
 
         if not verification:
             error = "Verification code was not found."
         elif verification.is_expired():
             send_verification_email(user)
+            verification = EmailVerification.objects.filter(user=user).first()
             error = "Code expired. We sent you a new one."
         elif verification.code != code:
             error = "Wrong verification code."
@@ -244,6 +248,7 @@ def verify_email_page(request):
         "error": error,
         "message": message,
         "email": user.email,
+        "dev_code": verification.code if verification else None,
     })
 
 
